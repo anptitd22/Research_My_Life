@@ -159,9 +159,9 @@ Các thuộc tính sau từ cấu hình Hadoop được sử dụng bởi trình
 |iceberg.hive.table-level-lock-evict-ms|600000 (10 min)|The timeout for the JVM table lock is|
 |iceberg.engine.hive.lock-enabled|true|Use HMS locks to ensure atomicity of commits|
 
-Lưu ý: iceberg.hive.lock-check-max-wait-ms và iceberg.hive.lock-heartbeat-interval-ms phải nhỏ hơn thời gian chờ giao dịch của Hive Metastore (hive.txn.timeout hoặc metastore.txn.timeout trong các phiên bản mới hơn). Nếu không, các nhịp đập trên khóa (xảy ra trong quá trình kiểm tra khóa) sẽ hết hạn trong Hive Metastore trước khi khóa được thử lại từ Iceberg. 
+Lưu ý: `iceberg.hive.lock-check-max-wait-ms` và `iceberg.hive.lock-heartbeat-interval-ms` phải nhỏ hơn thời gian chờ giao dịch của Hive Metastore (`hive.txn.timeout` hoặc `metastore.txn.timeout` trong các phiên bản mới hơn). Nếu không, các nhịp đập trên khóa (xảy ra trong quá trình kiểm tra khóa) sẽ hết hạn trong Hive Metastore trước khi khóa được thử lại từ Iceberg. 
 
-Cảnh báo: Việc thiết lập iceberg.engine.hive.lock-enabled=false sẽ khiến HiveCatalog cam kết với các bảng mà không sử dụng khóa Hive. Chỉ nên thiết lập giá trị này thành false nếu tất cả các điều kiện sau được đáp ứng:
+Cảnh báo: Việc thiết lập `iceberg.engine.hive.lock-enabled=false` sẽ khiến HiveCatalog cam kết với các bảng mà không sử dụng khóa Hive. Chỉ nên thiết lập giá trị này thành false nếu tất cả các điều kiện sau được đáp ứng:
 
 - [HIVE-26882](https://issues.apache.org/jira/browse/HIVE-26882) is available on the Hive Metastore server
     
@@ -173,4 +173,4 @@ Cảnh báo: Việc thiết lập iceberg.engine.hive.lock-enabled=false sẽ kh
     
 Failing to ensure these conditions risks corrupting the table.
 
-Ngay cả khi iceberg.engine.hive.lock-enabled được đặt thành false, HiveCatalog vẫn có thể sử dụng khóa cho từng bảng bằng cách đặt thuộc tính bảng engine.hive.lock-enabled=true. Điều này hữu ích trong trường hợp các HiveCatalog khác không thể được nâng cấp và thiết lập để cam kết mà không sử dụng khóa Hive.
+Ngay cả khi `iceberg.engine.hive.lock-enabled`được đặt thành false, HiveCatalog vẫn có thể sử dụng khóa cho từng bảng bằng cách đặt thuộc tính bảng `engine.hive.lock-enabled=true`. Điều này hữu ích trong trường hợp các HiveCatalog khác không thể được nâng cấp và thiết lập để cam kết mà không sử dụng khóa Hive.
