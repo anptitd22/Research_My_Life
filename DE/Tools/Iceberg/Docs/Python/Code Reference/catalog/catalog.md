@@ -1,7 +1,3 @@
-
-- [[#`Catalog`|`Catalog`]]
-	- [[#`Catalog`#`__enter__()`|`__enter__()`]]
-
 ## `Catalog`
 
 Bases: `ABC`
@@ -19,17 +15,9 @@ Thuộc tính:
 |`name`|`str`|Name of the catalog.|
 |`properties`|`[Properties](https://py.iceberg.apache.org/reference/pyiceberg/typedef/#pyiceberg.typedef.Properties "Properties = Dict[str, Any] module-attribute (pyiceberg.typedef.Properties)")`|Catalog properties.|
 
-Source code in `pyiceberg/catalog/__init__.py`
+Source code
 
-### `__enter__()`
-
-Nhập trình quản lý context.
-
-Trả về:
-
-| Name      | Type        | Description           |
-| --------- | ----------- | --------------------- |
-| `Catalog` | `'Catalog'` | The catalog instance. |
+[source code](https://py.iceberg.apache.org/reference/pyiceberg/catalog/#pyiceberg.catalog.Catalog)
 
 
 

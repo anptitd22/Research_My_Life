@@ -200,7 +200,7 @@ spark.sql.defaultCatalog                             local
 
 ### Next steps
 
-#### Adding Iceberg to Spark[](https://iceberg.apache.org/spark-quickstart/#adding-iceberg-to-spark "Permanent link")
+#### Adding Iceberg to Spark
 
 Nếu bạn đã có môi trường Spark, bạn có thể thêm Iceberg bằng cách sử dụng tùy chọn `--packages`.
 

@@ -2,3 +2,4 @@
 
 - Minimal Theme Settings (@kepano)
 - Tabs (HuaJi)
+- Table of Contents (Andrew)
