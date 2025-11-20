@@ -1,15 +1,22 @@
+
+- [[#Installation|Installation]]
+- [[#Connecting to a catalog|Connecting to a catalog]]
+- [[#Write a PyArrow dataframe|Write a PyArrow dataframe]]
+	- [[#Write a PyArrow dataframe#Explore Iceberg data and metadata files|Explore Iceberg data and metadata files]]
+- [[#More details|More details]]
+
 PyIceberg là một ứng dụng Python dùng để truy cập các bảng Iceberg mà không cần đến JVM.
 ## Installation
 
 Trước khi cài đặt PyIceberg, hãy đảm bảo rằng bạn đang sử dụng phiên bản pip mới nhất:
 
-```
+```bash
 pip install --upgrade pip
 ```
 
 Bạn có thể cài đặt phiên bản phát hành mới nhất từ ​​pypi:
 
-```
+```bash
 pip install "pyiceberg[s3fs,hive]"
 ```
 
@@ -48,15 +55,15 @@ Iceberg tận dụng catalog để có một nơi tập trung để sắp xếp 
 
 Tạo vị trí tạm thời cho Iceberg:
 
-```
+```bash
 mkdir /tmp/warehouse
 ```
 
 Mở Python 3 REPL để thiết lập catalog:
 
+```python
 from pyiceberg.catalog import load_catalog
 
-```
 warehouse_path = "/tmp/warehouse"
 catalog = load_catalog(
     "default",
@@ -76,13 +83,13 @@ Chúng ta hãy lấy tập dữ liệu Taxi và ghi vào bảng Iceberg.
 
 Tải xuống dữ liệu của một tháng đầu tiên:
 
-```
+```bash
 curl https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-01.parquet -o /tmp/yellow_tripdata_2023-01.parquet
 ```
 
 Tải nó vào khung dữ liệu PyArrow của bạn:
 
-```
+```python
 import pyarrow.parquet as pq
 
 df = pq.read_table("/tmp/yellow_tripdata_2023-01.parquet")
@@ -90,7 +97,7 @@ df = pq.read_table("/tmp/yellow_tripdata_2023-01.parquet")
 
 Tạo một bảng Iceberg mới:
 
-```
+```python
 catalog.create_namespace("default")
 
 table = catalog.create_table(
@@ -101,7 +108,7 @@ table = catalog.create_table(
 
 Thêm khung dữ liệu vào bảng:
 
-```
+```python
 table.append(df)
 len(table.scan().to_arrow())
 ```
@@ -110,7 +117,7 @@ len(table.scan().to_arrow())
 
 Bây giờ hãy tạo một tính năng tip-per-mile feature để đào tạo mô hình:
 
-```
+```python
 import pyarrow.compute as pc
 
 df = df.append_column("tip_per_mile", pc.divide(df["tip_amount"], df["trip_distance"]))
@@ -118,7 +125,7 @@ df = df.append_column("tip_per_mile", pc.divide(df["tip_amount"], df["trip_dista
 
 Evolve the schema của bảng với cột mới:
 
-```
+```bash
 with table.update_schema() as update_schema:
     update_schema.union_by_name(df.schema)
 ```

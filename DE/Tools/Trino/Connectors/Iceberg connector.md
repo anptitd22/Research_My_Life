@@ -1,4 +1,38 @@
 
+- [[#General configuration|General configuration]]
+	- [[#General configuration#Fault-tolerant execution support|Fault-tolerant execution support]]
+- [[#File system access configuration|File system access configuration]]
+- [[#Type mapping|Type mapping]]
+	- [[#Type mapping#Iceberg to Trino type mapping|Iceberg to Trino type mapping]]
+	- [[#Type mapping#Trino to Iceberg type mapping|Trino to Iceberg type mapping]]
+- [[#Security|Security]]
+	- [[#Security#Kerberos authentication|Kerberos authentication]]
+	- [[#Security#Authorization|Authorization]]
+- [[#SQL support|SQL support]]
+	- [[#SQL support#Basic usage examples|Basic usage examples]]
+	- [[#SQL support#Procedures|Procedures]]
+		- [[#Procedures#Register table|Register table]]
+		- [[#Procedures#Unregister table|Unregister table]]
+		- [[#Procedures#Migrate table|Migrate table]]
+		- [[#Procedures#Add files|Add files]]
+	- [[#SQL support#Functions|Functions]]
+		- [[#Functions#bucket|bucket]]
+	- [[#SQL support#Data management|Data management]]
+		- [[#Data management#Deletion by partition|Deletion by partition]]
+		- [[#Data management#Row level deletion|Row level deletion]]
+	- [[#SQL support#Schema and table management|Schema and table management]]
+		- [[#Schema and table management#Schema evolution|Schema evolution]]
+		- [[#Schema and table management#ALTER TABLE EXECUTE|ALTER TABLE EXECUTE]]
+			- [[#ALTER TABLE EXECUTE#optimize|optimize]]
+			- [[#ALTER TABLE EXECUTE#optimize_manifests|optimize_manifests]]
+			- [[#ALTER TABLE EXECUTE#expire_snapshots|expire_snapshots]]
+			- [[#ALTER TABLE EXECUTE#remove_orphan_files|remove_orphan_files]]
+			- [[#ALTER TABLE EXECUTE#drop_extended_stats|drop_extended_stats]]
+		- [[#Schema and table management#ALTER TABLE SET PROPERTIES|ALTER TABLE SET PROPERTIES]]
+			- [[#ALTER TABLE SET PROPERTIES#Table properties|Table properties]]
+		- [[#Schema and table management#Metadata tables|Metadata tables]]
+
+
 Apache Iceberg là một định dạng bảng mở (open format table) dành cho các tập dữ liệu phân tích khổng lồ. Trình kết nối Iceberg cho phép truy vấn dữ liệu được lưu trữ trong các tệp được viết theo định dạng Iceberg, như được định nghĩa trong [Iceberg Table Spec](https://iceberg.apache.org/spec/). Trình kết nối này hỗ trợ đặc tả bảng Apache Iceberg phiên bản 1 và 2.
 
 Trạng thái bảng được duy trì trong các tệp metadata. Mọi thay đổi đối với trạng thái bảng sẽ tạo một tệp metadata mới và thay thế metadata cũ bằng một hoán đổi nguyên tử. Tệp metadata bảng theo dõi schema bảng, cấu hình phân vùng, thuộc tính tùy chỉnh và snapshot nội dung bảng.
@@ -17,13 +51,13 @@ Vì Iceberg lưu trữ đường dẫn đến các tệp dữ liệu trong các 
 
 Bạn phải chọn và cấu hình một trong các [supported file systems](https://trino.io/docs/current/connector/iceberg.html#iceberg-file-system-configuration).
 
-```
+```config
 connector.name=iceberg
 hive.metastore.uri=thrift://example.net:9083
 fs.x.enabled=true
 ```
 
-Thay thế thuộc tính cấu hình fs.x.enabled bằng hệ thống tệp mong muốn.
+Thay thế thuộc tính cấu hình `fs.x.enabled` bằng hệ thống tệp mong muốn.
 
 Các loại metadata catalog khác được liệt kê trong phần yêu cầu của chủ đề này cũng khả dụng. Mỗi loại metadata có các thuộc tính cấu hình cụ thể cùng với các thuộc tính cấu hình metadata chung.
 
@@ -204,28 +238,28 @@ Bạn có thể tạo một schema bằng câu lệnh CREATE SCHEMA và thuộc 
 
 Tạo schema trên S3:
 
-```
+```sql
 CREATE SCHEMA example.example_s3_schema
 WITH (location = 's3://my-bucket/a/path/');
 ```
 
 Tạo schema trên bộ lưu trữ object tương thích với S3 như MinIO:
 
-```
+```sql
 CREATE SCHEMA example.example_s3a_schema
 WITH (location = 's3a://my-bucket/a/path/');
 ```
 
 Tạo schema trên HDFS:
 
-```
+```sql
 CREATE SCHEMA example.example_hdfs_schema
 WITH (location='hdfs://hadoop-master:9000/user/hive/warehouse/a/path/');
 ```
 
 Tùy chọn, trên HDFS, vị trí có thể được bỏ qua:
 
-```
+```sql
 CREATE SCHEMA example.example_hdfs_schema;
 ```
 
@@ -234,7 +268,7 @@ Trình kết nối Iceberg hỗ trợ tạo bảng bằng cú pháp CREATE TABLE
 
 Trình kết nối Iceberg hỗ trợ tạo bảng bằng cú pháp [CREATE TABLE](https://trino.io/docs/current/sql/create-table.html) . Bạn có thể tùy chọn chỉ định các thuộc tính bảng ([table properties](https://trino.io/docs/current/connector/iceberg.html#iceberg-table-properties)) được trình kết nối này hỗ trợ:
 
-```
+```sql
 CREATE TABLE example_table (
     c1 INTEGER,
     c2 DATE,
@@ -252,7 +286,7 @@ Khi thuộc tính bảng vị trí bị bỏ qua, nội dung của bảng sẽ �
 
 Một cách khác để tạo bảng bằng [CREATE TABLE AS](https://trino.io/docs/current/sql/create-table-as.html) là sử dụng cú pháp [VALUES](https://trino.io/docs/current/sql/values.html):
 
-```
+```sql
 CREATE TABLE yearly_clicks (
     year,
     clicks
@@ -277,7 +311,7 @@ Bộ kết nối có thể đăng ký các bảng Iceberg hiện có vào metast
 
 Quy trình system.register_table cho phép người gọi đăng ký bảng Iceberg hiện có trong metastore, bằng cách sử dụng metadata và tệp dữ liệu hiện có của bảng đó:
 
-```
+```sql
 CALL example.system.register_table(
   schema_name => 'testdb', 
   table_name => 'customer_orders', 
@@ -292,7 +326,7 @@ Trình kết nối có thể xóa các bảng Iceberg hiện có khỏi metastor
 
 Quy trình system.unregister_table cho phép người gọi hủy đăng ký bảng Iceberg hiện có khỏi metastore mà không xóa dữ liệu:
 
-```
+```sql
 CALL example.system.unregister_table(
   schema_name => 'testdb', 
   table_name => 'customer_orders');
@@ -306,7 +340,7 @@ Sử dụng thủ tục system.migrate để di chuyển một bảng từ đị
 
 Quy trình này phải được gọi cho một ví dụ catalog cụ thể với schema và tên bảng có liên quan được cung cấp cùng với các tham số bắt buộc schema_name và table_name:
 
-```
+```sql
 CALL example.system.migrate(
     schema_name => 'testdb',
     table_name => 'customer_orders');
@@ -316,7 +350,7 @@ Di chuyển sẽ không thành công nếu bất kỳ phân vùng bảng nào s�
 
 Ngoài ra, bạn có thể cung cấp đối số recursive_directory để di chuyển bảng Hive có chứa các thư mục con:
 
-```
+```sql
 CALL example.system.migrate(
     schema_name => 'testdb',
     table_name => 'customer_orders',
@@ -337,7 +371,7 @@ Quy trình này thêm các tệp vào bảng đích, được chỉ định sau 
 
 Các ví dụ sau đây sao chép dữ liệu từ bảng Hive hive_customer_orders trong schema cũ của example catalog vào bảng Iceberg iceberg_customer_orders trong schema lakehouse của example catalog:
 
-```
+```sql
 ALTER TABLE example.lakehouse.iceberg_customer_orders 
 EXECUTE add_files_from_table(
     schema_name => 'legacy',
@@ -346,7 +380,7 @@ EXECUTE add_files_from_table(
 
 Ngoài ra, bạn có thể thiết lập catalog và schema hiện tại bằng câu lệnh USE và bỏ qua thông tin catalog và schema:
 
-```
+```sql
 USE example.lakehouse;
 ALTER TABLE iceberg_customer_orders 
 EXECUTE add_files_from_table(
@@ -356,7 +390,7 @@ EXECUTE add_files_from_table(
 
 Sử dụng đối số partition_filter để thêm tệp từ các phân vùng được chỉ định. Ví dụ sau đây thêm tệp từ một phân vùng có khu vực là ASIA và quốc gia là JAPAN:
 
-```
+```sql
 ALTER TABLE example.lakehouse.iceberg_customer_orders 
 EXECUTE add_files_from_table(
     schema_name => 'legacy',
@@ -366,7 +400,7 @@ EXECUTE add_files_from_table(
 
 Ngoài ra, bạn có thể cung cấp đối số recursive_directory để di chuyển bảng Hive có chứa các thư mục con:
 
-```
+```sql
 ALTER TABLE example.lakehouse.iceberg_customer_orders 
 EXECUTE add_files_from_table(
     schema_name => 'legacy',
@@ -380,7 +414,7 @@ Thủ tục add_files hỗ trợ việc thêm tệp, và do đó là dữ liệu
 
 Các ví dụ sau đây sao chép các tệp định dạng ORC từ vị trí s3://my-bucket/a/path vào bảng Iceberg iceberg_customer_orders trong lược đồ lakehouse của example catalog:
 
-```
+```sql
 ALTER TABLE example.lakehouse.iceberg_customer_orders 
 EXECUTE add_files(
     location => 's3://my-bucket/a/path',
@@ -391,7 +425,7 @@ EXECUTE add_files(
 
 Các hàm có sẵn trong schema hệ thống của mỗi catalog. Các hàm có thể được gọi trong một câu lệnh SQL. Ví dụ: đoạn mã sau đây hiển thị cách thực thi hàm system.bucket trong  Iceberg catalog:
 
-```
+```sql
 SELECT system.bucket('trino', 16);
 ```
 
@@ -422,7 +456,7 @@ Các kiểu được hỗ trợ cho đối số thứ nhất của hàm này là
 
 Hàm này có thể được sử dụng trong mệnh đề WHERE để chỉ hoạt động trên một nhóm cụ thể:
 
-```
+```sql
 SELECT count(*)
 FROM customer
 WHERE system.bucket(custkey, 16) = 2;
@@ -436,7 +470,7 @@ Chức năng [Data management](https://trino.io/docs/current/language/sql-suppor
 
 Đối với các bảng phân vùng, trình kết nối Iceberg hỗ trợ xóa toàn bộ phân vùng nếu mệnh đề WHERE chỉ định bộ lọc trên các cột phân vùng đã được chuyển đổi danh tính, có thể khớp với toàn bộ phân vùng. Dựa trên định nghĩa bảng từ phần [Partitioned Tables](https://trino.io/docs/current/connector/iceberg.html#iceberg-tables), câu lệnh SQL sau sẽ xóa tất cả các phân vùng có quốc gia là US:
 
-```
+```sql
 DELETE FROM example.testdb.customer_orders
 WHERE country = 'US';
 ```
@@ -496,33 +530,33 @@ Tất cả các tệp có kích thước nhỏ hơn tham số file_size_threshol
     
 - có ít nhất một tệp dữ liệu, có đính kèm các tệp xóa
     
-```
+```sql
 ALTER TABLE test_table EXECUTE optimize
 ```
 
 Câu lệnh sau đây sẽ hợp nhất các tệp trong một bảng có kích thước dưới 128 megabyte:
 
-```
+```sql
 ALTER TABLE test_table EXECUTE optimize(file_size_threshold => '128MB')
 ```
 
 Bạn có thể sử dụng mệnh đề WHERE với các cột được sử dụng để phân vùng bảng nhằm lọc các phân vùng được tối ưu hóa:
 
-```
+```sql
 ALTER TABLE test_partitioned_table EXECUTE optimize
 WHERE partition_key = 1
 ```
 
 Bạn có thể sử dụng mệnh đề WHERE phức tạp hơn để thu hẹp phạm vi của quy trình tối ưu hóa. Ví dụ sau đây chuyển đổi giá trị dấu thời gian sang ngày tháng và sử dụng phép so sánh để chỉ tối ưu hóa các phân vùng có dữ liệu từ năm 2022 trở về sau:
 
-```
+```sql
 ALTER TABLE test_table EXECUTE optimize
 WHERE CAST(timestamp_tz AS DATE) > DATE '2021-12-31'
 ```
 
 Sử dụng mệnh đề WHERE với các [metadata columns](https://trino.io/docs/current/connector/iceberg.html#iceberg-metadata-columns) để lọc các tệp được tối ưu hóa.
 
-```
+```sql
 ALTER TABLE test_table EXECUTE optimize
 WHERE "$file_modified_time" > date_trunc('day', CURRENT_TIMESTAMP);
 ```
@@ -533,7 +567,7 @@ Viết lại các tệp manifest để nhóm chúng lại bằng cách phân vù
 
 optimize_manifests có thể được chạy như sau:
 
-```
+```sql
 ALTER TABLE test_table EXECUTE optimize_manifests;
 ```
 
@@ -543,7 +577,7 @@ Lệnh expire_snapshots sẽ xóa tất cả các snapshot và tất cả metada
 
 expire_snapshots có thể được chạy như sau:
 
-```
+```sql
 ALTER TABLE test_table EXECUTE expire_snapshots(retention_threshold => '7d');
 ```
 
@@ -555,7 +589,7 @@ Lệnh remove_orphan_files xóa tất cả các tệp khỏi thư mục dữ li�
 
 remove_orphan_files có thể được chạy như sau:
 
-```
+```sql
 ALTER TABLE test_table EXECUTE remove_orphan_files(retention_threshold => '7d');
 ```
 
@@ -587,7 +621,7 @@ Lệnh drop_extended_stats xóa mọi thông tin thống kê mở rộng khỏi 
 
 drop_extended_stats có thể được chạy như sau:
 
-```
+```sql
 ALTER TABLE test_table EXECUTE drop_extended_stats;
 ```
 
@@ -614,13 +648,13 @@ Các thuộc tính bảng sau đây có thể được cập nhật sau khi bả
 
 Ví dụ, để cập nhật bảng từ v1 của đặc tả Iceberg lên v2:
 
-```
+```sql
 ALTER TABLE table_name SET PROPERTIES format_version = 2;
 ```
 
 Hoặc để đặt cột my_new_partition_column làm cột phân vùng trên một bảng:
 
-```
+```sql
 ALTER TABLE table_name SET PROPERTIES partitioning = ARRAY[<existing partition columns>, 'my_new_partition_column'];
 ```
 
@@ -650,7 +684,7 @@ Thuộc tính iceberg
 
 Định nghĩa bảng bên dưới chỉ định sử dụng tệp Parquet, phân vùng theo cột c1 và c2 và vị trí hệ thống tệp là /var/example_tables/test_table:
 
-```
+```sql
 CREATE TABLE test_table (
     c1 INTEGER,
     c2 DATE,
@@ -663,7 +697,7 @@ WITH (
 
 Định nghĩa bảng bên dưới chỉ định sử dụng các tệp ORC với compression_codec SNAPPY, chỉ mục bộ lọc bloom theo cột c1 và c2, fpp là 0,05 và vị trí hệ thống tệp là /var/example_tables/test_table:
 
-```
+```sql
 CREATE TABLE test_table (
     c1 INTEGER,
     c2 DATE,
@@ -678,7 +712,7 @@ WITH (
 
 Định nghĩa bảng bên dưới chỉ định sử dụng tệp Avro, phân vùng theo trường child1 trong cột cha:
 
-```
+```sql
 CREATE TABLE test_table (
     data INTEGER,
     parent ROW(child1 DOUBLE, child2 INTEGER))

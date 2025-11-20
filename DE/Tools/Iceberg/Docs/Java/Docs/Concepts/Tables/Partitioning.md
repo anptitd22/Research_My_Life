@@ -1,10 +1,16 @@
+
+- [[#What is partitioning?|What is partitioning?]]
+- [[#What does Iceberg do differently?|What does Iceberg do differently?]]
+- [[#Partitioning in Hive (skip)|Partitioning in Hive (skip)]]
+- [[#Iceberg's hidden partitioning|Iceberg's hidden partitioning]]
+
 ### What is partitioning?
 
 Phân vùng là một cách để thực hiện truy vấn nhanh hơn bằng cách nhóm các hàng tương tự lại với nhau khi viết. 
 
 Ví dụ, các truy vấn cho mục nhật ký từ bảng nhật ký thường bao gồm phạm vi thời gian, như truy vấn này cho nhật ký từ 10 đến 12 giờ sáng:
 
-```
+```sql
 SELECT level, message FROM logs
 WHERE event_time BETWEEN '2018-12-01 10:00:00' AND '2018-12-01 12:00:00';
 ```

@@ -1,3 +1,9 @@
+
+- [[#Schema evolution|Schema evolution]]
+- [[#Correctness|Correctness]]
+- [[#Partition evolution|Partition evolution]]
+- [[#Sort order evolution|Sort order evolution]]
+
 Iceberg hỗ trợ tính năng table evolution tại chỗ. Bạn có thể schema evolution giống như SQL -- ngay cả trong các cấu trúc lồng nhau -- hoặc thay đổi bố cục phân vùng khi khối lượng dữ liệu thay đổi. Iceberg không yêu cầu những thao tác rườm rà tốn kém, chẳng hạn như viết lại dữ liệu bảng hoặc di chuyển sang bảng mới. 
 
 Ví dụ, phân vùng bảng Hive không thể thay đổi, do đó việc chuyển từ bố cục phân vùng theo ngày sang bố cục phân vùng theo giờ đòi hỏi phải có một bảng mới. Và vì các truy vấn phụ thuộc vào phân vùng, các truy vấn phải được viết lại cho bảng mới. Trong một số trường hợp, ngay cả những thay đổi đơn giản như đổi tên cột cũng không được hỗ trợ hoặc có thể gây ra sự cố về tính chính xác của dữ liệu.
@@ -57,7 +63,7 @@ Partition evolution là một hoạt động lên metadata và không ghi đè l
 
 API bảng Java của Iceberg cung cấp API updateSpec để cập nhật thông số phân vùng. Ví dụ: đoạn mã sau có thể được sử dụng để cập nhật thông số phân vùng nhằm thêm một trường phân vùng mới, đặt các giá trị cột id vào 8 nhóm và xóa một catalog trường phân vùng hiện có:
 
-```
+```java
 Table sampleTable = ...;
 sampleTable.updateSpec()
     .addField(bucket("id", 8))
@@ -73,7 +79,7 @@ Tương tự như đặc tả phân vùng, thứ tự sắp xếp Iceberg cũng 
 
 API bảng Java của Iceberg cung cấp API replaceSortOrder để cập nhật thứ tự sắp xếp. Ví dụ: đoạn mã sau có thể được sử dụng để tạo một thứ tự sắp xếp mới với cột id được sắp xếp theo thứ tự tăng dần với giá trị null đứng cuối, và cột category được sắp xếp theo thứ tự giảm dần với giá trị null đứng đầu:
 
-```
+```java
 Table sampleTable = ...;
 sampleTable.replaceSortOrder()
    .asc("id", NullOrder.NULLS_LAST)

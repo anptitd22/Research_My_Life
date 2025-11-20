@@ -1,0 +1,1 @@
+Apache Iceberg là một định dạng bảng mở (**open table format**) dành cho các tập dữ liệu phân tích khổng lồ. Iceberg bổ sung các bảng vào các công cụ tính toán bao gồm Spark, Trino, PrestoDB, Flink, Hive và Impala bằng cách sử dụng định dạng bảng hiệu suất cao, hoạt động giống như bảng SQL.

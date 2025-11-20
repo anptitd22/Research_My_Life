@@ -1,3 +1,11 @@
+
+- [[#Overview|Overview]]
+- [[#Use Cases|Use Cases]]
+- [[#Historical Tags|Historical Tags]]
+- [[#Audit Branch|Audit Branch]]
+- [[#Usage|Usage]]
+- [[#Schema selection with branches and tags|Schema selection with branches and tags]]
+
 ### Overview
 
 Metadata bảng Iceberg duy trì snapshot log, thể hiện những thay đổi được áp dụng cho một bảng. Snapshot rất quan trọng trong Iceberg vì chúng là cơ sở cho việc cô lập trình đọc và truy vấn time travel. Để kiểm soát kích thước metadata và chi phí lưu trữ, Iceberg cung cấp các quy trình quản lý vòng đời snapshot như expire_snapshots để xóa các snapshot không sử dụng và các tệp dữ liệu không còn cần thiết dựa trên các thuộc tính lưu giữ snapshot của bảng.
@@ -18,33 +26,30 @@ Sơ đồ trên minh họa việc lưu giữ lịch sử snapshot quan trọng b
 
 1. Lưu giữ 1 snapshot mỗi tuần trong 1 tháng. Điều này có thể thực hiện bằng cách gắn thẻ snapshot hàng tuần và đặt thời gian lưu giữ tag là 1 tháng. Các snapshot sẽ được lưu giữ, và tham chiếu nhánh sẽ được lưu giữ trong 1 tuần.
     
+```sql
 -- Create a tag for the first end of week snapshot. Retain the snapshot for a week
-
-```
 ALTER TABLE prod.db.table CREATE TAG `EOW-01` AS OF VERSION 7 RETAIN 7 DAYS;
 ```
 
 2. Lưu giữ 1 snapshot mỗi tháng trong 6 tháng. Có thể thực hiện điều này bằng cách gắn thẻ snapshot hàng tháng và đặt thời gian lưu giữ thẻ là 6 tháng.
     
+```sql
 -- Create a tag for the first end of month snapshot. Retain the snapshot for 6 months
-
-```
 ALTER TABLE prod.db.table CREATE TAG `EOM-01` AS OF VERSION 30 RETAIN 180 DAYS;
 ```
 
+
 3. Lưu giữ vĩnh viễn 1 bản sao lưu mỗi năm. Có thể thực hiện điều này bằng cách gắn thẻ cho bản sao lưu hàng năm. Mặc định, các nhánh và thẻ sẽ được lưu giữ vĩnh viễn.
     
+```sql
 -- Create a tag for the end of the year and retain it forever.
-
-```
 ALTER TABLE prod.db.table CREATE TAG `EOY-2023` AS OF VERSION 365;
 ```
 
 4. Tạo một "test-branch" tạm thời được lưu giữ trong 7 ngày và 2 snapshot mới nhất trên nhánh sẽ được lưu giữ.
     
+```sql
 -- Create a branch "test-branch" which will be retained for 7 days along with the  latest 2 snapshots
-
-```
 ALTER TABLE prod.db.table CREATE BRANCH `test-branch` RETAIN 7 DAYS WITH SNAPSHOT RETENTION 2 SNAPSHOTS;
 ```
 
@@ -54,38 +59,38 @@ ALTER TABLE prod.db.table CREATE BRANCH `test-branch` RETAIN 7 DAYS WITH SNAPSHO
 
 Sơ đồ trên cho thấy ví dụ về việc sử dụng nhánh kiểm tra để xác thực quy trình ghi.
 
-1. Đầu tiên hãy đảm bảo write.wap.enabled được thiết lập.
+1. Đầu tiên hãy đảm bảo `write.wap.enabled` được thiết lập.
     
-```
+```sql
 ALTER TABLE db.table SET TBLPROPERTIES (
     'write.wap.enabled'='true'
 );
 ```
 
-2. Create audit-branch starting from snapshot 3, which will be written to and retained for 1 week. 
+2. Create` audit-branch`bắt đầu từ snapshot 3, nhánh này sẽ được ghi vào và lưu giữ trong 1 tuần. 
     
-```
+```sql
 ALTER TABLE db.table CREATE BRANCH `audit-branch` AS OF VERSION 3 RETAIN 7 DAYS;
 ```
 
 3. Việc ghi được thực hiện trên một nhánh kiểm tra riêng biệt, độc lập với lịch sử bảng chính.
     
-```
+```sql
 -- WAP Branch write
 SET spark.wap.branch = audit-branch
 INSERT INTO prod.db.table VALUES (3, 'c');
 ```
 
-4. Quy trình xác thực có thể xác thực (ví dụ: chất lượng dữ liệu) trạng thái của nhánh kiểm toán.
+4. Quy trình xác thực có thể xác thực (ví dụ: chất lượng dữ liệu) trạng thái của nhánh `audit-branch`.
     
 
-5. Sau khi xác thực, nhánh chính có thể fastForward đến đầu nhánh audit-branch để cập nhật trạng thái bảng chính.
+5. Sau khi xác thực, nhánh chính có thể `fastForward` đến đầu nhánh `audit-branch` để cập nhật trạng thái bảng chính.
     
-```
+```sql
 CALL catalog_name.system.fast_forward('prod.db.table', 'main', 'audit-branch');
 ```
 
-6. Tham chiếu nhánh sẽ bị xóa khi expireSnapshots được chạy sau 1 tuần.
+6. Tham chiếu nhánh sẽ bị xóa khi `expireSnapshots` được chạy sau 1 tuần.
     
 ### Usage
 
@@ -107,14 +112,13 @@ Thư viện Iceberg Java và tích hợp công cụ Spark và Flink hỗ trợ v
     
 ### Schema selection with branches and tags
 
-Điều quan trọng là phải hiểu rằng lược đồ được theo dõi cho một bảng có hiệu lực trên tất cả các nhánh. Khi làm việc với các nhánh, lược đồ của bảng được sử dụng vì đó là lược đồ được xác thực khi ghi dữ liệu vào một nhánh. Mặt khác, việc truy vấn thẻ sẽ sử dụng lược đồ của snapshot, tức là ID lược đồ mà snapshot trỏ đến khi snapshot được tạo.
+Điều quan trọng là phải hiểu rằng schema được theo dõi cho một bảng có hiệu lực trên tất cả các nhánh. Khi làm việc với các nhánh, schema của bảng được sử dụng vì đó là schema được xác thực khi ghi dữ liệu vào một nhánh. Mặt khác, việc truy vấn thẻ sẽ sử dụng schema của snapshot, tức là schema ID mà snapshot trỏ đến khi snapshot được tạo.
 
-Các ví dụ dưới đây cho thấy lược đồ nào đang được sử dụng khi làm việc với các nhánh.
+Các ví dụ dưới đây cho thấy schema nào đang được sử dụng khi làm việc với các nhánh.
 
 Tạo một bảng và chèn một số dữ liệu:
 
-
-```
+```sql
 CREATE TABLE db.table (id bigint, data string, col float);
 INSERT INTO db.table VALUES (1, 'a', 1.0), (2, 'b', 2.0), (3, 'c', 3.0);
 SELECT * FROM db.table;
@@ -125,9 +129,9 @@ SELECT * FROM db.table;
 3   c   3.0
 ```
   
-Tạo nhánh test_branch trỏ đến snapshot hiện tại và đọc dữ liệu từ nhánh:
+Tạo nhánh `test_branch` trỏ đến snapshot hiện tại và đọc dữ liệu từ nhánh:
 
-```
+```sql
 ALTER TABLE db.table CREATE BRANCH test_branch;
 SELECT * FROM db.table.branch_test_branch;
 1   a   1.0
@@ -135,9 +139,9 @@ SELECT * FROM db.table.branch_test_branch;
 3   c   3.0
 ```
 
-Sửa đổi lược đồ của bảng bằng cách xóa cột col và thêm một cột mới có tên là new_col:
+Sửa đổi schema của bảng bằng cách xóa cột `col` và thêm một cột mới có tên là `new_col`:
 
-```
+```sql
 ALTER TABLE db.table DROP COLUMN col;
 
 ALTER TABLE db.table ADD COLUMN new_col date;
@@ -152,9 +156,9 @@ SELECT * FROM db.table;
 5   e   2024-05-05
 ```
   
-Truy vấn đầu nhánh bằng một trong các câu lệnh dưới đây sẽ trả về dữ liệu bằng cách sử dụng lược đồ của bảng:
+Truy vấn đầu nhánh bằng một trong các câu lệnh dưới đây sẽ trả về dữ liệu bằng cách sử dụng schema của bảng:
 
-```
+```sql
 SELECT * FROM db.table.branch_test_branch;
 1   a   NULL
 2   b   NULL
@@ -166,10 +170,9 @@ SELECT * FROM db.table VERSION AS OF 'test_branch';
 3   c   NULL
 ```
 
-Thực hiện truy vấn travel time bằng cách sử dụng ID snapshot sẽ sử dụng lược đồ của snapshot:
+Thực hiện truy vấn travel time bằng cách sử dụng ID snapshot sẽ sử dụng schema của snapshot:
 
-
-```
+```sql
 SELECT * FROM db.table.refs;
 test_branch BRANCH  8109744798576441359 NULL    NULL    NULL
 main        BRANCH  6910357365743665710 NULL    NULL    NULL
@@ -180,9 +183,9 @@ SELECT * FROM db.table VERSION AS OF 8109744798576441359;
 3   c   3.0
 ```
 
-Khi ghi vào nhánh, lược đồ của bảng được sử dụng để xác thực:
+Khi ghi vào nhánh, schema của bảng được sử dụng để xác thực:
 
-```
+```sql
 INSERT INTO db.table.branch_test_branch VALUES (6, 'e', date('2024-06-06')), (7, 'g', date('2024-07-07'));
 
 SELECT * FROM db.table.branch_test_branch;

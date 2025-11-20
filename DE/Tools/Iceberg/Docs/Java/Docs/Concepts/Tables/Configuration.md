@@ -1,3 +1,13 @@
+
+- [[#Table properties|Table properties]]
+- [[#Write properties|Write properties]]
+- [[#Table behavior properties|Table behavior properties]]
+- [[#Reserved table properties|Reserved table properties]]
+- [[#Compatibility flags|Compatibility flags]]
+- [[#Catalog properties|Catalog properties]]
+- [[#Lock catalog properties|Lock catalog properties]]
+- [[#Hadoop configuration|Hadoop configuration]]
+
 ### Table properties
 
 Bảng Iceberg hỗ trợ các thuộc tính bảng để cấu hình hành vi của bảng, như kích thước phân chia mặc định cho trình đọc.

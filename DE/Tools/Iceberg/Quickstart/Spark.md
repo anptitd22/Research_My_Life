@@ -1,3 +1,11 @@
+
+- [[#Docker-Compose|Docker-Compose]]
+- [[#Reading Data from a Table|Reading Data from a Table]]
+- [[#Adding A Catalog|Adding A Catalog]]
+- [[#Next steps|Next steps]]
+	- [[#Next steps#Adding Iceberg to Spark[](https://iceberg.apache.org/spark-quickstart/#adding-iceberg-to-spark "Permanent link")|Adding Iceberg to Spark[](https://iceberg.apache.org/spark-quickstart/#adding-iceberg-to-spark "Permanent link")]]
+	- [[#Next steps#Learn More|Learn More]]
+
 Hướng dẫn này sẽ giúp bạn bắt đầu và chạy Apache Iceberg™ bằng Apache Spark™, ​​bao gồm mã mẫu để làm nổi bật một số tính năng mạnh mẽ. Bạn có thể tìm hiểu thêm về thời gian chạy Spark của Iceberg bằng cách xem phần Spark.
 
 - [Docker-Compose](https://iceberg.apache.org/spark-quickstart/#docker-compose)
@@ -13,7 +21,7 @@ Cách nhanh nhất để bắt đầu là sử dụng tệp docker-compose sử 
 
 Sau khi có những thứ đó, hãy lưu yaml bên dưới vào một tệp có tên là `docker-compose.yml`:
 
-```
+```yaml
 services:
   spark-iceberg:
     image: tabulario/spark-iceberg
@@ -90,7 +98,7 @@ networks:
 
 Tiếp theo, khởi động các container docker bằng lệnh này:
 
-```
+```bash
 docker-compose up
 ```
 
@@ -98,13 +106,13 @@ Sau đó, bạn có thể chạy bất kỳ lệnh nào sau đây để bắt đ
 
 ~~~tabs
 tab: SparkSQL
-```
+```sql
 INSERT INTO demo.nyc.taxis
 VALUES (1, 1000371, 1.8, 15.32, 'N'), (2, 1000372, 2.5, 22.15, 'N'), (2, 1000373, 0.9, 9.01, 'N'), (1, 1000374, 8.4, 42.13, 'Y');
 ```
 
 tab: Spark-Shell
-```
+```scala
 import org.apache.spark.sql.Row
 
 val schema = spark.table("demo.nyc.taxis").schema
@@ -119,7 +127,7 @@ df.writeTo("demo.nyc.taxis").append()
 ```
 
 tab: PySpark
-```
+```python
 schema = spark.table("demo.nyc.taxis").schema
 data = [
     (1, 1000371, 1.8, 15.32, "N"),
@@ -139,17 +147,17 @@ df.writeTo("demo.nyc.taxis").append()
 
 ~~~tabs
 tab: SparkSQL
-```
+```sql
 SELECT * FROM demo.nyc.taxis;
 ```
 
 tab: Spark-Shell
-```
+```scala
 val df = spark.table("demo.nyc.taxis").show()
 ```
 
 tab: PySpark
-```
+```python
 df = spark.table("demo.nyc.taxis").show()
 ```
 ~~~
@@ -163,7 +171,7 @@ Cấu hình này tạo ra một catalog dựa trên đường dẫn có tên là
 ~~~tabs
 
 tab: CLI
-```
+```bash
 spark-sql --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.0\
     --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions \
     --conf spark.sql.catalog.spark_catalog=org.apache.iceberg.spark.SparkSessionCatalog \
@@ -175,7 +183,7 @@ spark-sql --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.0\
 ```
 
 tab: spark-defaults.conf
-```
+```bash
 spark.jars.packages                                  org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.0
 spark.sql.extensions                                 org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
 spark.sql.catalog.spark_catalog                      org.apache.iceberg.spark.SparkSessionCatalog
@@ -199,17 +207,17 @@ Nếu bạn đã có môi trường Spark, bạn có thể thêm Iceberg bằng 
 ~~~tabs
 
 tab: SparkSQL
-```
+```bash
 spark-sql --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.0
 ```
 
 tab: Spark-Shell
-```
+```bash
 spark-shell --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.0
 ```
 
 tab: PySpark
-```
+```bash
 pyspark --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.0
 ```
 ~~~

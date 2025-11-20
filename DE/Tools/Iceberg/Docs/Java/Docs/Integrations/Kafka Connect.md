@@ -20,7 +20,7 @@ Apache Iceberg Sink Connector cho Kafka Connect là một bộ kết nối sink 
 
 The connector zip archive is created as part of the Iceberg build. You can run the build via: 
 
-```
+```bash
 cd kafka-connect
 
 ./gradlew -x test -x integrationTest clean build
