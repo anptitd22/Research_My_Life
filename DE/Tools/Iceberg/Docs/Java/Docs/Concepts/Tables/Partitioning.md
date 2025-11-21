@@ -41,7 +41,7 @@ Phân vùng bảng được cấu hình bằng các mối quan hệ này. Bảng
 
 Vì Iceberg không yêu cầu các cột phân vùng do người dùng quản lý, nên nó có thể ẩn phân vùng. Các giá trị phân vùng luôn được tạo chính xác và luôn được sử dụng để tăng tốc truy vấn, nếu có thể. Các producer và consumer thậm chí sẽ không nhìn thấy event_date. 
 
-Quan trọng nhất, các truy vấn không còn phụ thuộc vào bố cục vật lý của bảng. Với sự tách biệt giữa vật lý và logic, các bảng Iceberg có thể phát triển các lược đồ phân vùng theo thời gian khi khối lượng dữ liệu thay đổi. Các bảng được cấu hình sai có thể được sửa mà không cần di chuyển tốn kém. 
+Quan trọng nhất, các truy vấn không còn phụ thuộc vào bố cục vật lý của bảng. Với sự tách biệt giữa vật lý và logic, các bảng Iceberg có thể phát triển các schema phân vùng theo thời gian khi khối lượng dữ liệu thay đổi. Các bảng được cấu hình sai có thể được sửa mà không cần di chuyển tốn kém. 
 
 Để biết chi tiết về tất cả các chuyển đổi phân vùng ẩn được hỗ trợ, hãy xem phần [Partition Transforms](https://iceberg.apache.org/spec/#partition-transforms).
 

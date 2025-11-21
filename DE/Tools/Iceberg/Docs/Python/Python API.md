@@ -70,7 +70,7 @@ Thông tin này phải được đặt bên trong tệp có tên `.pyiceberg.yam
 
 Bạn cũng có thể tải catalog mà không cần sử dụng `.pyiceberg.yaml` bằng cách truyền trực tiếp các thuộc tính:
 
-```
+```python
 from pyiceberg.catalog import load_catalog
 
 catalog = load_catalog(

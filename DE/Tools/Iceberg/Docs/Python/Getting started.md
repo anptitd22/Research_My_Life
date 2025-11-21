@@ -125,21 +125,21 @@ df = df.append_column("tip_per_mile", pc.divide(df["tip_amount"], df["trip_dista
 
 Evolve the schema của bảng với cột mới:
 
-```bash
+```python
 with table.update_schema() as update_schema:
     update_schema.union_by_name(df.schema)
 ```
 
 Và bây giờ chúng ta có thể ghi khung dữ liệu mới vào bảng Iceberg:
 
-```
+```python
 table.overwrite(df)
 print(table.scan().to_arrow())
 ```
 
 Và cột mới ở đó:
 
-```
+```python
 taxi_dataset(
   1: VendorID: optional long,
   2: tpep_pickup_datetime: optional timestamp,
@@ -166,7 +166,7 @@ taxi_dataset(
 
 Và chúng ta có thể thấy rằng 2371784 hàng có một tip-per-mile:
 
-```
+```python
 df = table.scan(row_filter="tip_per_mile > 0").to_arrow()
 len(df)
 ```
@@ -175,7 +175,7 @@ len(df)
 
 Vì catalog được cấu hình để sử dụng hệ thống tệp cục bộ nên chúng ta có thể khám phá cách Iceberg lưu dữ liệu và tệp metadata từ các hoạt động trên.
 
-```
+```bash
 find /tmp/warehouse/
 ```
 
