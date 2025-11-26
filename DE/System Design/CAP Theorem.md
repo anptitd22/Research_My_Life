@@ -149,7 +149,7 @@ Tại sao chúng tôi sử dụng Hệ thống AP?
 
 Phát biểu vấn đề:
 
-- Hãy tưởng tượng một giỏ hàng trực tuyến, thêm sản phẩm và thanh toán. Hệ thống này có thể sử dụng phương pháp kết hợp để cân bằng các đánh đổi CAP.
+- Hãy tưởng tượng một giỏ hàng trực tuyến, thêm sản phẩm và thanh toán. Hệ thống này có thể sử dụng phương pháp kết hợp để cân bằng các đôi một CAP.
     
 
 Tại sao chúng ta sử dụng Hệ thống AP và CP?  
