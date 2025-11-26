@@ -32,7 +32,6 @@ Phần này cung cấp định nghĩa chắc chắn về các khái niệm cốt
 ## Architecture
 
 Trino là một công cụ truy vấn phân tán xử lý dữ liệu song song trên nhiều máy chủ. Có hai loại máy chủ Trino: máy chủ điều phối (coordinator) và máy chủ công tác (worker). Các phần sau đây mô tả các máy chủ này và các thành phần khác trong kiến ​​trúc của Trino.
-
 ![alt text](/images/trino_architecture.png)
 
 ### Cluster

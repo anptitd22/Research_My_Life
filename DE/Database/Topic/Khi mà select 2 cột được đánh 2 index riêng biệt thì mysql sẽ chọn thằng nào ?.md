@@ -1,4 +1,4 @@
-MySQL thường sử dụng index có số lượng bản ghi nhỏ nhất (chỉ mục có tính chọn lọc cao nhất).
+MySQL thường sử dụng index có số lượng bản ghi nhỏ nhất (index có tính chọn lọc cao nhất).
 Ví dụ:
 - Có index(age) và index(height)
 ```sql
