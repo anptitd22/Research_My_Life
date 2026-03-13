@@ -1,1 +1,1 @@
-Tận dụng cơ chế cache của docker compose build
+Tận dụng cơ chế layer cache của docker compose build
