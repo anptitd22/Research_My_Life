@@ -20,7 +20,7 @@ Phân nhánh và gắn thẻ có thể được sử dụng để xử lý các 
 
 Thẻ có thể được sử dụng để lưu giữ các lịch sử snapshot quan trọng cho mục đích kiểm tra.
 
-![alt text](images/Pasted_image_20251121130256.png)
+![alt text](Pasted_image_20251121130256.png)
 
 Sơ đồ trên minh họa việc lưu giữ lịch sử snapshot quan trọng bằng chính sách lưu giữ sau, được xác định thông qua Spark SQL.
 
@@ -55,7 +55,7 @@ ALTER TABLE prod.db.table CREATE BRANCH `test-branch` RETAIN 7 DAYS WITH SNAPSHO
 
 ### Audit Branch
 
-![alt text](images/Pasted_image_20251121130433.png)
+![alt text](Pasted_image_20251121130433.png)
 
 Sơ đồ trên cho thấy ví dụ về việc sử dụng nhánh kiểm tra để xác thực quy trình ghi.
 

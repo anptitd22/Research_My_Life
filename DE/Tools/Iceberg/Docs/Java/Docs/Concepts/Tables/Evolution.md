@@ -51,7 +51,7 @@ Phân vùng bảng Iceberg có thể được cập nhật trong một bảng hi
 Khi bạn phát triển một đặc tả phân vùng, dữ liệu cũ được ghi bằng đặc tả trước đó sẽ không thay đổi. Dữ liệu mới được ghi bằng đặc tả mới trong một bố cục mới. Metadata cho mỗi phiên bản phân vùng được lưu trữ riêng biệt. Do đó, khi bạn bắt đầu viết truy vấn, bạn sẽ được lập kế hoạch phân tách. Đây là nơi mỗi bố cục phân vùng lập kế hoạch các tệp riêng biệt bằng bộ lọc mà nó suy ra cho bố cục phân vùng cụ thể đó. Dưới đây là hình ảnh minh họa một ví dụ giả định:
 
 
-![alt text](images/Pasted_image_20251121130605.png)
+![alt text](Pasted_image_20251121130605.png)
 
   
 Dữ liệu năm 2008 được phân vùng theo tháng. Bắt đầu từ năm 2009, bảng được cập nhật để dữ liệu được phân vùng theo ngày. Cả hai bố cục phân vùng có thể cùng tồn tại trong cùng một bảng.
