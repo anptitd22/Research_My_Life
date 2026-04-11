@@ -13,12 +13,12 @@ Chuẩn hóa là một quy trình quan trọng trong thiết kế cơ sở dữ 
 - Trước khi chuẩn hóa: Bảng dễ bị trùng lặp và có các bất thường (chèn, cập nhật và xóa). 
 - Sau khi chuẩn hóa: Dữ liệu được chia thành các bảng logic để đảm bảo tính nhất quán (consistency), tránh trùng lặp và loại bỏ các bất thường, giúp cơ sở dữ liệu hoạt động hiệu quả và đáng tin cậy.
 
-Các vấn đề trong mối quan hệ Nhân viên_Phòng ban
+Các vấn đề trong mối quan hệ Employee_Department
 
-- Lỗi khi thêm dữ liệu: Nếu một phòng ban mới được tạo nhưng chưa có nhân viên nào được chỉ định vào phòng ban đó, chúng ta không thể lưu trữ vị trí của phòng ban đó vì cần có bản ghi nhân viên để thêm vào. 
-- Lỗi cập nhật: Nếu vị trí của phòng Nhân sự thay đổi, chúng ta phải cập nhật thông tin ở nhiều dòng (cho cả Nick Wise và Lily Case). Nếu bỏ sót một dòng, dữ liệu sẽ trở nên không nhất quán. 
-- Lỗi xóa dữ liệu: Nếu tất cả nhân viên trong bộ phận CNTT nghỉ việc, chúng ta sẽ mất thông tin của bộ phận, bao gồm cả địa điểm. 
-- Dữ liệu dư thừa: Thông tin về vị trí phòng ban được lặp lại cho mọi nhân viên trong cùng một phòng ban.
+- Lỗi khi insert dữ liệu: Nếu một department mới được tạo nhưng chưa có employee nào được chỉ định vào department đó, chúng ta không thể lưu trữ dept_location đó vì cần có bản ghi employee để thêm vào. 
+- Lỗi update: Nếu dept_location thay đổi, chúng ta phải cập nhật thông tin ở nhiều dòng (cho cả Nick Wise và Lily Case). Nếu bỏ sót một dòng, dữ liệu sẽ trở nên không nhất quán. 
+- Lỗi delete dữ liệu: Nếu tất cả employee trong bộ phận CNTT nghỉ việc, chúng ta sẽ mất thông tin của bộ phận, bao gồm cả location. 
+- Dữ liệu dư thừa: Thông tin về dept_location được lặp lại cho mọi employee trong cùng một dept.
 
 ## Normal Forms in DBMS
 
