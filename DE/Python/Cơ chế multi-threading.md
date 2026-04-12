@@ -137,7 +137,7 @@ Việc sử dụng danh sách hoặc bộ dữ liệu làm đối số `args` đ
 
 Ví dụ:
 
-	```python
+```python
 from threading import Thread
 t = Thread(target=print, args=[1])
 t.run()
