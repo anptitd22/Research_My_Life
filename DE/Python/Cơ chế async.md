@@ -181,7 +181,7 @@ Hello
 
 Nói một cách đơn giản, các [tasks](https://docs.python.org/3/library/asyncio-task.html#asyncio-task-obj) là các coroutine (không phải hàm coroutine) được gắn với một event loop. Một task cũng duy trì một danh sách các hàm gọi lại (callback), tầm quan trọng của chúng sẽ được làm rõ trong chốc lát khi chúng ta thảo luận về [`await`](https://docs.python.org/3/reference/expressions.html#await). Cách được khuyến nghị để tạo task là thông qua [`asyncio.create_task()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task "asyncio.create_task").
 
-Việc tạo một tác vụ sẽ tự động lên lịch thực thi cho tác vụ đó (bằng cách thêm một hàm gọi (call back) lại để chạy nó trong danh sách việc cần làm của event loop, tức là tập hợp các công việc).
+Việc create_task sẽ tự động lên lịch thực thi cho task đó (bằng cách thêm một hàm gọi (call back) lại để chạy nó trong danh sách việc cần làm của event loop, tức là tập hợp các công việc).
 
 Asyncio tự động liên kết các task với event loop cho bạn. Việc liên kết tự động này được thiết kế có chủ đích trong asyncio vì mục đích đơn giản hóa. Nếu không có nó, bạn sẽ phải theo dõi đối tượng event loop và truyền nó cho bất kỳ hàm coroutine nào muốn tạo tác vụ, làm tăng thêm sự rườm rà không cần thiết cho mã của bạn.
 
@@ -293,7 +293,7 @@ I am coro_a(). Hi!
 
 Hành vi của coroutine `await` có thể gây nhầm lẫn cho rất nhiều người! Ví dụ đó cho thấy việc chỉ sử dụng coroutine `await` có thể vô tình chiếm quyền điều khiển từ các task khác và làm đình trệ event loop. `asyncio.run()` có thể giúp bạn phát hiện những trường hợp như vậy thông qua cờ `debug=True`, cho phép [debug mode](https://docs.python.org/3/library/asyncio-dev.html#asyncio-debug-mode). Trong số những thứ khác, nó sẽ ghi lại bất kỳ coroutine nào chiếm quyền thực thi trong 100ms trở lên.
 
-Thiết kế này cố tình đánh đổi một phần sự rõ ràng về mặt khái niệm xung quanh việc sử dụng await để cải thiện hiệu suất. Mỗi khi một task được chờ đợi, quyền điều khiển cần được truyền lên toàn bộ ngăn xếp cuộc gọi đến event loop. Điều đó nghe có vẻ nhỏ nhặt, nhưng trong một chương trình lớn với nhiều câu lệnh await và ngăn xếp cuộc gọi sâu, chi phí phát sinh đó có thể tích lũy thành một sự suy giảm hiệu suất đáng kể.
+Thiết kế này cố tình đánh đổi một phần sự rõ ràng về mặt khái niệm xung quanh việc sử dụng await để cải thiện hiệu suất. Mỗi khi một task được chờ đợi, quyền điều khiển cần được truyền lên toàn bộ ngăn xếp cuộc gọi đến event loop. Điều đó nghe có vẻ nhỏ nhặt, nhưng trong một chương trình lớn với nhiều câu lệnh await và callstack sâu, chi phí phát sinh đó có thể tích lũy thành một sự suy giảm hiệu suất đáng kể.
 
 >[!note]
 >Vậy await lồng nhau trong task nó sẽ là event loop + call stack
@@ -391,7 +391,7 @@ Cách duy nhất để nhường quyền điều khiển (hay nói cách khác l
 
 Một future có một vài thuộc tính quan trọng. Một trong số đó là trạng thái của nó, có thể là “pending”, “cancelled”, hoặc “done”. Một thuộc tính khác là kết quả của nó, được thiết lập khi trạng thái chuyển sang "đã hoàn thành". Không giống như coroutine, future không đại diện cho phép tính thực tế cần thực hiện; thay vào đó, nó đại diện cho trạng thái và kết quả của phép tính đó, giống như một đèn báo trạng thái (đỏ, vàng hoặc xanh lá cây) hoặc chỉ báo.
 
-Lớp [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task "asyncio.Task") kế thừa từ [`asyncio.Future`](https://docs.python.org/3/library/asyncio-future.html#asyncio.Future "asyncio.Future") để có được các khả năng khác nhau này. Phần trước nói rằng các tác vụ lưu trữ một danh sách các hàm gọi lại, điều này không hoàn toàn chính xác. Trên thực tế, chính lớp `Future` mới là lớp thực hiện logic này, và `Task` kế thừa từ nó.
+Lớp [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task "asyncio.Task") kế thừa từ [`asyncio.Future`](https://docs.python.org/3/library/asyncio-future.html#asyncio.Future "asyncio.Future") để có được các khả năng khác nhau này. Phần trước nói rằng các task lưu trữ một danh sách các hàm gọi lại, điều này không hoàn toàn chính xác. Trên thực tế, chính lớp `Future` mới là lớp thực hiện logic này, và `Task` kế thừa từ nó.
 
 Bạn cũng có thể sử dụng Futures trực tiếp (không thông qua Tasks). Tasks tự đánh dấu là hoàn thành khi coroutine của nó kết thúc. Futures linh hoạt hơn nhiều và sẽ được đánh dấu là hoàn thành khi bạn yêu cầu. Theo cách này, chúng là giao diện linh hoạt cho phép bạn tự đặt ra các điều kiện chờ đợi và tiếp tục.
 ### A homemade asyncio.sleep
