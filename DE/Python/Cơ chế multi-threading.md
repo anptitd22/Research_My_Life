@@ -107,10 +107,10 @@ _class_ threading.Thread(_group=None_, _target=None_, _name=None_, _args=()_, _k
 Hàm tạo này luôn phải được gọi với các đối số từ khóa. Các đối số là: 
 
 - Thuộc tính `group` nên là `None`; được dành riêng cho việc mở rộng trong tương lai khi lớp `ThreadGroup` được triển khai. `
-- target` là đối tượng có thể gọi được sẽ được phương thức `run()` gọi. Mặc định là `None`, nghĩa là không có gì được gọi.
+- `target` là đối tượng có thể gọi được sẽ được phương thức `run()` gọi. Mặc định là `None`, nghĩa là không có gì được gọi.
 - `name` là tên của luồng. Theo mặc định, một tên duy nhất được tạo ra có dạng “Thread-N” trong đó N là một số thập phân nhỏ, hoặc “Thread-N (target)” trong đó “target” là target.__name__ nếu đối số target được chỉ định.
 - `args` là một danh sách hoặc bộ các đối số cho lời gọi hàm mục tiêu. Mặc định là `(`).
-- ` kwargs là một từ điển chứa các đối số từ khóa cho lời gọi hàm mục tiêu. Mặc định là {}. 
+- ` kwargs `là một từ điển chứa các đối số từ khóa cho lời gọi hàm mục tiêu. Mặc định là {}. 
 - Nếu không phải là None, daemon sẽ thiết lập rõ ràng xem luồng đó có phải là luồng nền hay không. Nếu là None (mặc định), thuộc tính daemonic sẽ được kế thừa từ luồng hiện tại.
 
 `context` là giá trị `Context` được sử dụng khi khởi tạo luồng. Giá trị mặc định là `None`, cho biết cờ `sys.flags.thread_inherit_context` kiểm soát hành vi. Nếu cờ là `true`, các luồng sẽ bắt đầu với một bản sao của ngữ cảnh của người gọi phương thức `start()`. Nếu là `false`, chúng sẽ bắt đầu với một ngữ cảnh trống. Để bắt đầu rõ ràng với một ngữ cảnh trống, hãy truyền một thể hiện mới của `Context()`. Để bắt đầu rõ ràng với một bản sao của ngữ cảnh hiện tại, hãy truyền giá trị từ `copy_context()`. Cờ này mặc định là `true` trên các bản dựng free-threaded và `false` trong các trường hợp khác.
