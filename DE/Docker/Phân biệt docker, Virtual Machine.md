@@ -1,5 +1,4 @@
 ![alt text](images/Docker/Compare_docker_VM.png)
-
 **Docker**
 - Containers sẽ dùng thẳng OS kernel trên máy dùng
 - Là một application
