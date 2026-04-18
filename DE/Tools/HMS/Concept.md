@@ -8,6 +8,8 @@ Hive Metastore phục vụ như một kho lưu trữ trung tâm cho tất cả c
 
 Kiến trúc của Hive Metastore được thiết kế dựa trên nguyên tắc tách biệt giữa giao diện dịch vụ và lưu trữ dữ liệu thực tế. Về cơ bản, HMS bao gồm hai thành phần nền tảng: Dịch vụ Metastore (Metastore Service) và Cơ sở dữ liệu phụ trợ (Backend Database). Dịch vụ Metastore đóng vai trò là lớp API, nhận các yêu cầu từ các máy khách (clients) và thực hiện các thao tác đọc/ghi vào cơ sở dữ liệu quan hệ phía sau.  
 
+![alt][images/Tools/HMS/HMS_workflow.png]
+
 ### Giao Diện Dịch Vụ và Giao Thức Thrift
 
 Để đảm bảo tính trung lập và khả năng tương thích cao với nhiều ngôn ngữ lập trình cũng như các công cụ khác nhau, Hive Metastore sử dụng giao thức Apache Thrift. Thrift cung cấp một khung làm việc cho phép định nghĩa các kiểu dữ liệu và giao diện dịch vụ trong một tệp định nghĩa duy nhất, sau đó tạo ra mã nguồn cho nhiều ngôn ngữ như Java, C++, Python, và PHP.  
