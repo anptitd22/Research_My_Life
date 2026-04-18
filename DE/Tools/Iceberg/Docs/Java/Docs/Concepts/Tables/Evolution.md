@@ -24,7 +24,7 @@ Iceberg hỗ trợ những thay schema evolution sau:
     
 Iceberg schema evolution là những thay đổi metadata, do đó không cần phải viết lại tệp dữ liệu để thực hiện cập nhật.
 
-Lưu ý rằng các khóa bản đồ không hỗ trợ việc thêm hoặc xóa các trường cấu trúc có thể làm thay đổi tính bình đẳng.
+Lưu ý rằng các map keys không hỗ trợ việc thêm hoặc xóa các trường cấu trúc có thể làm thay đổi tính bình đẳng.
 
 ### Correctness
 
