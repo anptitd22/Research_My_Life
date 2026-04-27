@@ -47,16 +47,38 @@ Chương 2 của tài liệu đóng vai trò như một danh sách chính thức
 - **Thiết kế hợp tác:** Các mô hình chiều không nên được thiết kế độc lập mà phải thông qua các buổi hội thảo có tính tương tác cao với đại diện từ phía doanh nghiệp và quản trị dữ liệu,.
 - **Quy trình thiết kế 4 bước (Four-Step Dimensional Design Process):** Mọi thiết kế đều bắt buộc phải trải qua bốn quyết định trọng tâm:
     1. **Chọn quy trình nghiệp vụ (Business Processes):** Xác định các hoạt động vận hành tạo ra các thước đo hiệu suất (như nhận đơn hàng, thanh toán),,.
+	    - Quy trình nghiệp vụ là các hoạt động tác nghiệp nền tảng do tổ chức thực hiện, thường được diễn đạt bằng các động từ hành động (ví dụ: nhận đơn hàng, lập hóa đơn, đăng ký khóa học, hoặc xử lý yêu cầu bồi thường).
+		- Các quy trình này được hỗ trợ bởi các hệ thống tác nghiệp và là nơi tạo ra hoặc thu thập các chỉ số đo lường hiệu suất (metrics).
+		- Việc thiết kế phải tập trung vào **các quy trình nghiệp vụ** thay vì tập trung vào ranh giới của các phòng ban/bộ phận, điều này giúp đảm bảo dữ liệu được cung cấp một cách nhất quán trên toàn bộ doanh nghiệp.
     2. **Xác định mức độ hạt (Declare the Grain):** Xác định chính xác ý nghĩa của một dòng (row) trong bảng sự kiện, đảm bảo mọi dữ liệu trong bảng phải cùng một mức độ chi tiết để tránh tính toán trùng lặp,. Mức độ hạt nguyên thủy (atomic) là tốt nhất để đáp ứng các truy vấn linh hoạt,.
+	    - Đây là bước mang tính bước ngoặt của mọi thiết kế chiều, nhằm trả lời chính xác cho câu hỏi: **"Một dòng (row) trong bảng sự kiện đại diện cho điều gì?"**.
+		- Mức độ hạt hoạt động như một bản hợp đồng ràng buộc toàn bộ thiết kế và **bắt buộc phải được xác định trước** khi chọn các chiều hoặc thước đo.
+		- Mức độ hạt nên được diễn đạt bằng các thuật ngữ kinh doanh.
+		- Lý tưởng nhất, mô hình nên lưu trữ dữ liệu ở **mức độ hạt chi tiết nhất (atomic grain)**—tức là mức độ thấp nhất mà quy trình nghiệp vụ thu thập được. Dữ liệu chi tiết nhất mang lại sự linh hoạt phân tích tối đa, giúp hệ thống chịu đựng được các truy vấn ngẫu nhiên (ad-hoc) không lường trước từ người dùng.
+		- **Quy tắc bất di bất dịch:** Tuyệt đối không được trộn lẫn các mức độ hạt khác nhau trong cùng một bảng sự kiện.
     3. **Xác định các chiều (Identify the Dimensions):** Xác định các ngữ cảnh ("ai, cái gì, ở đâu, khi nào, như thế nào") bao quanh sự kiện,,.
+	    - Chiều trả lời cho câu hỏi: _"Người dùng doanh nghiệp mô tả dữ liệu sinh ra từ các sự kiện đo lường như thế nào?"_. Các chiều cung cấp ngữ cảnh mô tả **"ai, cái gì, ở đâu, khi nào, tại sao và như thế nào"** bao quanh sự kiện nghiệp vụ đó.
+		- Bảng chiều chứa các thuộc tính được các ứng dụng BI sử dụng để lọc (filtering) và nhóm (grouping) dữ liệu.
+		- Khi mức độ hạt đã được cố định ở Bước 2, bạn có thể dễ dàng xác định tất cả các chiều có thể có. Mỗi chiều chỉ nên mang một giá trị duy nhất khi gắn với một dòng sự kiện cụ thể.
     4. **Xác định các thước đo (Identify the Facts):** Xác định các con số đo lường sinh ra từ quy trình nghiệp vụ đó,.
-- **Sự linh hoạt:** Mô hình chiều có khả năng mở rộng dễ dàng (thêm chiều mới, thêm số đo mới) mà không làm ảnh hưởng đến các truy vấn BI hiện tại.
+	    - Thước đo được xác định bằng cách trả lời câu hỏi: _"Quy trình này đang đo lường điều gì?"_.
+		- Thước đo là kết quả sinh ra từ sự kiện nghiệp vụ và hầu như luôn là các **dữ liệu số (numeric facts)**. Những thước đo hữu ích nhất là các số liệu có thể cộng gộp toàn phần (additive), chẳng hạn như số lượng đặt hàng hay số tiền chi phí.
+		- Tất cả các thước đo được đưa vào bảng sự kiện **phải tuân thủ tuyệt đối mức độ hạt** đã tuyên bố ở Bước 2. Nếu một thước đo thuộc về một mức độ hạt khác, nó bắt buộc phải được đặt ở một bảng sự kiện khác.
+		- **Sự linh hoạt:** Mô hình chiều có khả năng mở rộng dễ dàng (thêm chiều mới, thêm số đo mới) mà không làm ảnh hưởng đến các truy vấn BI hiện tại.
 
 **2. Kỹ thuật Bảng Sự kiện cơ bản (Basic Fact Table Techniques)**
 
 - **Cấu trúc bảng sự kiện:** Chứa các số liệu đo lường và các khóa ngoại (foreign keys) để liên kết tới bảng chiều.
 - **Tính cộng gộp:** Các sự kiện có thể là cộng gộp toàn phần (additive), cộng gộp bán phần (semi-additive - ví dụ số dư kho không thể cộng theo thời gian), hoặc không thể cộng gộp (non-additive).
+	- - **Additive (Cộng gộp toàn phần):** Bạn có thể cộng con số này theo bất kỳ chiều nào.
+	    - _Ví dụ:_ Doanh số. Bạn cộng theo Ngày, theo Cửa hàng hay theo Sản phẩm đều ra kết quả có ý nghĩa.
+	- **Semi-additive (Cộng gộp bán phần):** Con số có thể cộng theo một số chiều, nhưng **không thể cộng theo thời gian**.
+	    - _Ví dụ:_ Số dư tài khoản hoặc Tồn kho. Nếu hôm nay bạn có 100 triệu, ngày mai có 100 triệu, bạn không thể nói cả 2 ngày bạn có 200 triệu. Nhưng bạn có thể cộng số dư của 10 khách hàng khác nhau để biết tổng tiền trong ngân hàng.
+	- **Non-additive (Không thể cộng gộp):** Thường là các tỉ lệ hoặc đơn giá.
+	    - _Ví dụ:_ Tỉ suất lợi nhuận (10%). Bạn không thể cộng 10% của món hàng A với 10% của món hàng B để ra 20%. Bạn phải tính lại dựa trên tổng doanh thu và tổng vốn.
 - **Giá trị Null:** Bảng sự kiện không được chứa giá trị Null ở các khóa ngoại; thay vào đó, phải dùng một dòng mặc định trong bảng chiều để thay thế,.
+	- **Lý do:** Nếu bạn Join Fact với Dimension mà khóa ngoại bị Null, dòng dữ liệu đó sẽ biến mất khỏi kết quả báo cáo (do phép Inner Join).
+	- **Cách xử lý:** Trong bảng Dimension, ta tạo một dòng "mồi" với ID là `-1` (Ví dụ: "Khách hàng vãng lai" hoặc "Không xác định"). Trong bảng Fact, nếu không biết khách hàng là ai, ta điền `-1` thay vì để Null.
 - **3 Loại Bảng Sự kiện (Fact Tables) cơ bản:**
     - **Transaction (Giao dịch):** Mỗi dòng đại diện cho một sự kiện đo lường tại một thời điểm cụ thể, chứa nhiều chiều chi tiết nhất.
     - **Periodic Snapshot (Chụp nhanh định kỳ):** Tổng hợp dữ liệu theo các khoảng thời gian chuẩn (như mỗi ngày, mỗi tháng), thường chứa nhiều số đo và luôn có dữ liệu dù không có hoạt động phát sinh,.
