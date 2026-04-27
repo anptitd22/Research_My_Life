@@ -94,6 +94,50 @@ Chương 2 của tài liệu đóng vai trò như một danh sách chính thức
 - **Chiều rác (Junk Dimensions):** Thu gom các mã cờ (flags) và các chỉ báo trạng thái rời rạc vào một bảng chiều chung duy nhất thay vì tạo quá nhiều chiều nhỏ.
 - **Snowflakes & Outriggers:** Khuyến cáo hạn chế việc phân mảnh bảng chiều (Snowflaking) vì nó làm giảm hiệu suất, nhưng cho phép một bảng chiều tham chiếu đến một chiều thứ cấp khác (Outrigger) trong các trường hợp đặc biệt,.
 
+**4. Integration via Conformed Dimensions**
+
+4.1. Conformed Dimensions
+
+Một bảng Dimension được gọi là "Conformed" (Đồng nhất) khi nó có cấu trúc và nội dung dữ liệu giống hệt nhau khi được sử dụng ở nhiều bảng Fact khác nhau.
+Nó đóng vai trò như một bộ từ điển dùng chung cho toàn bộ doanh nghiệp.
+- **Ví dụ:** Bảng `Dim_Product` được dùng cho cả Fact Bán hàng, Fact Tồn kho và Fact Thu mua. Dù ở báo cáo nào, mã sản phẩm `123` vẫn phải tên là "iPhone 15" và thuộc danh mục "Điện thoại".
+
+Thách thức lớn nhất trong OLAP là việc thực hiện các phân tích xuyên suốt (Cross-process analysis).
+- Nếu không đồng nhất:
+	- Phòng Sales định nghĩa khách hàng theo mã CRM.
+	- Phòng Chăm sóc khách hàng định nghĩa khách hàng theo số điện thoại.
+	- **Hậu quả:** Bạn không thể biết một khách hàng hay phàn nàn có phải là người đóng góp doanh số lớn nhất hay không, vì hai bảng Fact không có "tiếng nói chung".
+
+4.2. Hai hình thức của Chiều đồng nhất
+
+A. Identical (Giống hệt nhau)
+
+Bảng Dimension được copy y nguyên hoặc dùng chung một bảng vật lý duy nhất.
+- _Ví dụ:_ `Dim_Date` là bảng giống hệt nhau cho mọi quy trình.
+
+B. Shrunken Rollups (Tập con thu gọn)
+
+Đây là trường hợp đặc biệt nhưng cực kỳ quan trọng. Một bảng Dimension thu gọn chứa một tập con các hàng và cột của bảng Dimension chi tiết hơn, nhưng định nghĩa và khóa (Key) phải khớp nhau.
+_Ví dụ:_
+- `Dim_Product`: Chi tiết đến từng mã SKU (dùng cho Fact Bán hàng).
+- `Dim_Brand`: Chỉ chi tiết đến mức Thương hiệu (dùng cho Fact Ngân sách/Kế hoạch).
+- **Tính đồng nhất:** Thương hiệu "Apple" trong bảng thu gọn phải có cùng khóa và thuộc tính với thương hiệu "Apple" trong bảng chi tiết.
+
+4.3. Drill-Across (Truy vấn xuyên suốt)
+
+Đơn giản có nghĩa là thực hiện các truy vấn riêng biệt trên hai hoặc nhiều bảng dữ liệu, trong đó tiêu đề hàng của mỗi truy vấn bao gồm các thuộc tính giống hệt nhau đã được chuẩn hóa. Tập kết quả từ hai truy vấn được căn chỉnh bằng cách thực hiện thao tác sắp xếp-hợp nhất trên các tiêu đề hàng thuộc tính chiều chung. Các nhà cung cấp công cụ BI gọi chức năng này bằng nhiều tên khác nhau, bao gồm "stitch" và "multipass query"
+
+Vì cả hai bảng Fact đều "treo" vào cùng một `Product_Key = 10`, bạn có thể thực hiện một báo cáo tích hợp cực kỳ quyền lực:
+**Câu hỏi:** _"Danh sách sản phẩm có số lượng bán trong ngày lớn hơn số lượng tồn kho hiện tại (Cảnh báo cháy hàng)"_
+**Cách hệ thống hoạt động:**
+1. **Bước 1:** Truy vấn `Fact_Sales` để lấy tổng `Quantity_Sold` của `Product_Key = 10`. (Kết quả: 50).
+2. **Bước 2:** Truy vấn `Fact_Inventory` để lấy `Quantity_On_Hand` của `Product_Key = 10`. (Kết quả: 5).
+3. **Bước 3 (Integration):** Nối kết quả của Bước 1 và Bước 2 dựa trên **Conformed Dimension (`Product_Key`)**.
+
+| **Product_Name** | **Doanh số hôm nay** | **Tồn kho hiện tại** | **Trạng thái**           |
+| ---------------- | -------------------- | -------------------- | ------------------------ |
+| iPhone 15 Pro    | 50                   | 5                    | **Cảnh báo: Cháy hàng!** |
+
 # Chương 3: Retail Sales
 
 Chương 3 của tài liệu sử dụng hệ thống bán lẻ (Retail Sales) làm ví dụ kinh điển để minh họa cách xây dựng một mô hình chiều từ đầu. Mặc dù sử dụng ngành bán lẻ, các vấn đề và kỹ thuật được trình bày ở đây là kiến thức nền tảng, có thể áp dụng cho mọi loại hình doanh nghiệp,.
