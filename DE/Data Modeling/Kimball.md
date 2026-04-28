@@ -21,6 +21,86 @@ Chương 1 của tài liệu đóng vai trò là nền tảng, trình bày bức
 - **Bảng sự kiện (Fact Tables):** Chứa các phép đo lường (measurements) của quy trình nghiệp vụ, thường là dữ liệu số. Mỗi dòng trong bảng sự kiện tương ứng với một sự kiện ở mức độ chi tiết cụ thể, gọi là **hạt (grain)**. Hữu ích nhất là các fact có thể cộng gộp toàn phần (additive).
 - **Bảng chiều (Dimension Tables):** Cung cấp ngữ cảnh mô tả (ai, cái gì, ở đâu, khi nào, như thế nào) cho các sự kiện. Đây là nguồn cho các thao tác lọc (filtering), nhóm (grouping) và dán nhãn báo cáo. Các bảng chiều thường được phi chuẩn hóa (denormalized/flattened) để tối ưu hiệu suất, tránh việc phân mảnh dữ liệu thành nhiều bảng nhỏ (được gọi là **snowflaking**). Khi bảng sự kiện và bảng chiều kết nối với nhau, chúng tạo ra một cấu trúc đơn giản, đối xứng, linh hoạt với sự thay đổi và cho phép "Drill Down" (đào sâu dữ liệu) vô hạn nếu bảng sự kiện chứa dữ liệu ở mức độ chi tiết nhất (atomic data).
 
+**3.1. OLAP Cubes**
+
+Khái niệm về **OLAP Cubes (Khối đa chiều)** và các vấn đề liên quan được tác giả phân tích chi tiết, đóng vai trò là một trong những phương pháp cốt lõi để triển khai dữ liệu đa chiều bên cạnh lược đồ hình sao (Star schemas).
+
+**3.1.1. Khái niệm về OLAP Cubes**
+
+- OLAP Cubes là các **cấu trúc chiều được triển khai trong môi trường cơ sở dữ liệu đa chiều**, thay vì cơ sở dữ liệu quan hệ (RDBMS).
+- Khối OLAP giúp người dùng có thể hình dung dữ liệu một cách trực quan. Nó bao gồm các chiều (ví dụ: sản phẩm, thị trường, thời gian) và tại các điểm giao cắt bên trong khối là nơi lưu trữ các thước đo (facts) như doanh số hay lợi nhuận. Người dùng có thể dễ dàng "cắt và xoay" (slice and dice) các chiều này để phân tích.
+- Cubes thường được truy cập thông qua các ngôn ngữ phân tích mạnh mẽ hơn SQL, điển hình là **XMLA và MDX**.
+- Trong thực tế triển khai, một **lược đồ hình sao (Star schema) trong cơ sở dữ liệu quan hệ chứa dữ liệu ở mức độ hạt (atomic) thường được dùng làm nền tảng vững chắc** để xây dựng và nạp dữ liệu lên các khối OLAP.
+
+**3.1.2. Các ưu điểm và khả năng nổi trội của OLAP Cubes**
+
+- **Hiệu suất truy vấn cực cao:** Dữ liệu trong khối OLAP được lập chỉ mục và **tính toán sẵn các bảng tổng hợp (precalculated summary tables/aggregations)** bởi engine của OLAP. Điều này cho phép người dùng "drill down" (đào sâu) hoặc "drill up" (cuộn lên) với tốc độ xuất sắc mà không cần hệ thống phải phát ra các truy vấn tính toán mới từ đầu.
+- **Năng lực phân tích phức tạp:** OLAP vượt xa những rào cản của SQL truyền thống. Nó xử lý rất mượt mà các chỉ số khó như: tính toán tỷ lệ/phần trăm (non-additive facts), xử lý dữ liệu bán cộng gộp như số dư tài khoản (semi-additive), tính toán các chỉ số lũy kế từ đầu năm (YTD), và các hàm tài chính chuyên sâu như giá trị hiện tại thuần (NPV) hay tăng trưởng kép.
+- **Giải quyết hoàn hảo các phân cấp phức tạp:** OLAP hỗ trợ mạnh mẽ bằng cú pháp gốc cho các **cấu trúc phân cấp rách (ragged hierarchies)** có độ sâu không xác định (như sơ đồ tổ chức phức tạp), vốn là một điểm yếu của CSDL quan hệ.
+- **Bảo mật tinh vi:** Cung cấp các tùy chọn bảo mật linh hoạt hơn CSDL quan hệ, ví dụ như giới hạn quyền truy cập vào dữ liệu chi tiết nhưng vẫn cho phép người dùng xem được dữ liệu tổng hợp.
+- **Phân tích các sự kiện "Không xảy ra":** Rất hiệu quả trong việc xử lý dữ liệu thưa thớt (sparsity). Khối OLAP chứa các ô (cells) rõ ràng ghi nhận sự không có mặt của hành vi, giúp dễ dàng trả lời các câu hỏi về "điều gì đã không xảy ra" (ví dụ: sản phẩm nào đang khuyến mãi mà không bán được).
+- **Tương thích với SCD Type 2:** OLAP xử lý mượt mà các Chiều thay đổi chậm Loại 2 (SCD Type 2) và các mini-dimension (Type 4) vì mỗi khi có sự thay đổi, hệ thống chỉ việc coi khóa thay thế mới như một thành viên mới trong khối.
+
+**3.1.3. Các vấn đề và hạn chế của OLAP Cubes**
+
+- **Chi phí hiệu suất khi tải dữ liệu:** Đổi lấy tốc độ truy vấn là một "cái giá đắt" về hiệu suất khi tải dữ liệu, đặc biệt là khi phải xử lý và tính toán lại các tập dữ liệu khổng lồ.
+- **Điểm yếu chí mạng với thao tác ghi đè (Overwrites):** Khối OLAP cực kỳ nhạy cảm với việc cập nhật/ghi đè dữ liệu. Các xử lý như SCD Type 1, SCD Type 3, hoặc **bảng sự kiện chụp nhanh lũy kế (Accumulating Snapshots)** (vốn yêu cầu cập nhật lại các dòng liên tục) sẽ ép khối OLAP phải **xử lý và tính toán lại một phần hoặc toàn bộ (reprocessed)**. Điều này có thể làm giảm hiệu suất, gây hỏng hóc hoặc đánh sập khối OLAP.
+- **Thiếu tính chuẩn hóa giữa các nhà cung cấp:** Cấu trúc dữ liệu của OLAP thay đổi và phụ thuộc rất nhiều vào từng nhà cung cấp (vendor-specific), khiến việc dịch chuyển các ứng dụng BI từ công cụ OLAP này sang công cụ OLAP khác khó khăn hơn nhiều so với việc chuyển đổi giữa các CSDL quan hệ.
+- **Hạn chế về tính "Nhập vai" của bảng chiều (Role-playing):** Một số sản phẩm OLAP không hỗ trợ khái niệm dùng chung một bảng chiều cho nhiều vai trò (ví dụ: dùng một bảng Ngày cho cả Ngày đặt hàng và Ngày nhận), hoặc không cho phép đổi tên bí danh (aliases). Điều này buộc bạn phải tạo ra nhiều bảng chiều vật lý riêng biệt, làm hệ thống rườm rà.
+- **Đòi hỏi khắt khe về chất lượng dữ liệu nền:** Nhiều hệ thống OLAP không tự giải quyết được vấn đề toàn vẹn tham chiếu (Referential Integrity) hay làm sạch dữ liệu, và một số thậm chí **cấm sử dụng các giá trị Null**. Mọi phân cấp và dữ liệu phải được làm sạch, kiểm tra nghiêm ngặt tại hệ thống ETL và lược đồ hình sao trước khi nạp vào Cube.
+
+**3.2. StarSchema**
+
+**Lược đồ hình sao (Star Schema)** là mô hình đa chiều được triển khai thực tế trong các hệ thống quản trị cơ sở dữ liệu quan hệ (RDBMS). Cấu trúc này được gọi là "hình sao" vì nó bao gồm một **bảng sự kiện (fact table)** trung tâm chứa các số liệu đo lường nghiệp vụ, được bao quanh bởi một "vầng hào quang" các **bảng chiều (dimension tables)** chứa ngữ cảnh mô tả (ai, cái gì, ở đâu, khi nào) tại thời điểm sự kiện xảy ra. Các bảng này được liên kết với nhau thông qua mối quan hệ khóa chính / khóa ngoại.
+
+**Các vấn đề và Đặc điểm của Star Schema**
+
+- **Tính trực quan và hiệu suất:** Star Schema sở hữu sự đơn giản và tính đối xứng cao, giúp người dùng doanh nghiệp dễ dàng nhận diện và điều hướng dữ liệu. Đối với hệ thống, các bộ tối ưu hóa cơ sở dữ liệu (database optimizers) xử lý các lược đồ này rất hiệu quả vì chúng có thể thực hiện truy vấn với ít phép kết nối (joins) hơn và đánh giá dữ liệu chỉ trong một lần duyệt qua chỉ mục của bảng sự kiện.
+- **Chứa dữ liệu chi tiết (atomic):** Lược đồ hình sao thường được thiết kế để chứa dữ liệu ở mức độ chi tiết nguyên thủy nhất, tạo ra sự linh hoạt vô hạn để đối phó với mọi truy vấn bất ngờ từ người dùng.
+- **Hạn chế về phân tích phức tạp:** Vì hoạt động trên RDBMS, Star Schema bị giới hạn bởi các ràng buộc của ngôn ngữ SQL truyền thống, khiến việc thực hiện các phép tính tài chính, thống kê phức tạp hoặc phân tích dữ liệu đa chiều trở nên khó khăn hơn so với OLAP.
+
+**3.3. So sánh StarSchema với OLAP Cubes**
+
+**So sánh Star Schema và OLAP Cubes**
+
+Mặc dù cả Star Schema và Khối OLAP (OLAP Cubes) đều có chung một thiết kế logic về dữ liệu đa chiều (có các chiều và sự kiện), việc triển khai vật lý của chúng mang lại những ưu và nhược điểm khác biệt:
+
+**3.3.1. Nền tảng lưu trữ và Ngôn ngữ truy vấn**
+
+- **Star Schema:** Được triển khai trên cơ sở dữ liệu quan hệ (RDBMS) và truy cập bằng ngôn ngữ SQL.
+- **OLAP Cubes:** Được triển khai trên các môi trường cơ sở dữ liệu đa chiều chuyên biệt và sử dụng các ngôn ngữ có khả năng phân tích mạnh mẽ hơn SQL, điển hình như XMLA và MDX.
+
+**3.3.2. Hiệu suất và Tính toán**
+
+- **OLAP Cubes:** Khối OLAP lưu trữ, lập chỉ mục và **tính toán sẵn các bảng tổng hợp (precalculated summaries)** bằng engine riêng, mang lại hiệu suất truy vấn "khoan sâu" (drill-down) cực kỳ xuất sắc.
+- **Star Schema:** Tốc độ truy vấn truyền thống chậm hơn do phải thực hiện các phép kết nối (join) ở thời gian thực. Tuy nhiên, sự khác biệt về hiệu suất này đang ngày càng thu hẹp nhờ sự tiến bộ của phần cứng (như in-memory databases) và phần mềm RDBMS (như cơ sở dữ liệu dạng cột - columnar databases).
+
+**3.3.3. Khả năng cập nhật và xử lý dữ liệu thay đổi (SCD)**
+
+- **Star Schema:** Xử lý cực kỳ mượt mà các bảng sự kiện **chụp nhanh lũy kế (Accumulating Snapshots)** và các phương pháp cập nhật/ghi đè dữ liệu lịch sử (như SCD Type 1 hoặc Type 3).
+- **OLAP Cubes:** Đây là "tử huyệt" của OLAP. Khối OLAP rất nhạy cảm với việc cập nhật. Khi dữ liệu bị ghi đè, khối OLAP thường phải mất thời gian để xử lý và tính toán lại toàn bộ hoặc một phần. Do đó, OLAP không hỗ trợ tốt cho Accumulating Snapshots.
+
+**3.3.4. Xử lý Cấu trúc phân cấp (Hierarchies)**
+
+- **OLAP Cubes:** Hỗ trợ cú pháp truy vấn gốc vượt trội để xử lý các **cấu trúc phân cấp rách (ragged hierarchies)** có độ sâu không xác định (như sơ đồ tổ chức phức tạp).
+- **Star Schema:** Gặp khó khăn với phân cấp rách trên RDBMS, thường đòi hỏi phải thiết kế thêm các cấu trúc phụ trợ phức tạp như **bảng cầu nối (bridge tables)**.
+
+**3.3.5. Khả năng linh hoạt của Bảng chiều**
+
+- **Star Schema:** Cho phép một bảng chiều vật lý đóng nhiều vai trò khác nhau (Role-playing dimensions) trong cùng một bảng sự kiện thông qua các khung nhìn (views) hoặc bí danh (aliases) một cách dễ dàng.
+- **OLAP Cubes:** Một số công cụ OLAP không hỗ trợ khái niệm "nhập vai" hoặc bí danh, buộc nhà thiết kế phải tạo ra các bảng chiều vật lý tách biệt, làm hệ thống rườm rà. Đồng thời, cấu trúc khóa chiều trong OLAP bị áp đặt nhiều quy tắc khắt khe hơn.
+
+**3.3.6. Tính chuẩn hóa và Độc lập với nhà cung cấp**
+
+- **Star Schema:** Các cơ sở dữ liệu quan hệ có tính tiêu chuẩn hóa cao, giúp việc dịch chuyển ứng dụng BI giữa các nền tảng dễ dàng hơn.
+- **OLAP Cubes:** Cấu trúc dữ liệu OLAP phụ thuộc rất nhiều vào từng nhà cung cấp (vendor-specific), khiến việc di chuyển một ứng dụng BI từ công cụ OLAP này sang công cụ OLAP khác vô cùng khó khăn.
+
+**3.3.7. Bảo mật (Security)**
+
+- **OLAP Cubes:** Cung cấp các tùy chọn bảo mật tinh vi hơn RDBMS, cho phép giới hạn quyền truy cập vào dữ liệu ở mức độ chi tiết nhưng vẫn mở quyền truy cập cho người dùng xem dữ liệu tổng hợp.
+
+**Kết luận về mối quan hệ cộng sinh:** Trong thực tiễn kiến trúc DW/BI, hai cấu trúc này không hoàn toàn loại trừ nhau. **Một Star Schema chứa dữ liệu chi tiết (atomic) được lưu trữ trong cơ sở dữ liệu quan hệ là nền tảng vật lý hoàn hảo và ổn định nhất để từ đó xây dựng và nạp dữ liệu lên các khối OLAP** phục vụ mục đích phân tích cấp cao.
+
 **4. Các Kiến trúc DW/BI** Tài liệu phân tích kiến trúc của Kimball (như đã giải thích) và so sánh với 3 mô hình thay thế:
 
 - **Independent Data Mart (Data Mart Độc lập):** Các bộ phận tự xây dựng kho dữ liệu riêng rẽ. Cách này tạo ra các "ốc đảo" dữ liệu không đồng nhất, gây tranh cãi về tính chính xác và không được khuyên dùng.
