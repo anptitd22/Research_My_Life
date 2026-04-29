@@ -1,0 +1,2 @@
+MySQL sử dụng ghi nhật ký dựa trên câu lệnh (SBL), ghi nhật ký dựa trên hàng (RBL) hoặc ghi nhật ký định dạng hỗn hợp. Loại nhật ký nhị phân được sử dụng ảnh hưởng đến kích thước và hiệu quả của việc ghi nhật ký. Do đó, việc lựa chọn giữa sao chép dựa trên hàng (RBR) hoặc sao chép dựa trên câu lệnh (SBR) phụ thuộc vào ứng dụng và môi trường của bạn. Phần này mô tả các sự cố đã biết khi sử dụng nhật ký định dạng dựa trên hàng và mô tả một số phương pháp hay nhất khi sử dụng nó trong sao chép dữ liệu.
+

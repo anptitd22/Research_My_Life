@@ -1,0 +1,10 @@
+Phần này mô tả việc sao chép dữ liệu giữa các máy chủ MySQL dựa trên phương pháp vị trí binary log file, trong đó phiên bản MySQL hoạt động như nguồn (nơi diễn ra các thay đổi cơ sở dữ liệu) ghi các bản cập nhật và thay đổi dưới dạng “sự kiện” vào nhật ký nhị phân. Thông tin trong nhật ký nhị phân được lưu trữ ở các định dạng ghi nhật ký khác nhau tùy thuộc vào các thay đổi cơ sở dữ liệu được ghi lại. Các bản sao được cấu hình để đọc nhật ký nhị phân từ nguồn và thực thi các sự kiện trong nhật ký nhị phân trên bản sao của chúng.…
+
+Mỗi bản sao nhận được một bản sao toàn bộ nội dung của binary log. Bản sao có trách nhiệm quyết định câu lệnh nào trong nhật ký nhị phân nên được thực thi. Trừ khi bạn chỉ định khác, tất cả các sự kiện trong nhật ký nhị phân của nguồn đều được thực thi trên bản sao. Nếu cần, bạn có thể cấu hình bản sao để chỉ xử lý các sự kiện áp dụng cho các cơ sở dữ liệu hoặc bảng cụ thể.
+
+Mỗi bản sao lưu giữ một bản ghi về tọa độ của nhật ký nhị phân: tên tệp và vị trí trong tệp mà nó đã đọc và xử lý từ nguồn. Điều này có nghĩa là nhiều bản sao có thể được kết nối với nguồn và thực thi các phần khác nhau của cùng một nhật ký nhị phân. Vì các bản sao kiểm soát quá trình này, nên các bản sao riêng lẻ có thể được kết nối và ngắt kết nối khỏi máy chủ mà không ảnh hưởng đến hoạt động của nguồn. Ngoài ra, vì mỗi bản sao ghi lại vị trí hiện tại trong nhật ký nhị phân nên quá trình này diễn ra bình thường.…
+
+Nguồn và mỗi bản sao phải được cấu hình với một ID duy nhất (sử dụng biến hệ thống server_id). Ngoài ra, mỗi bản sao phải được cấu hình với thông tin về tên máy chủ của nguồn, tên tệp nhật ký và vị trí trong tệp đó. Các chi tiết này có thể được kiểm soát từ bên trong phiên MySQL bằng cách sử dụng câu lệnh CHANGE REPLICATION SOURCE TO trên bản sao. Các chi tiết được lưu trữ trong kho lưu trữ siêu dữ liệu kết nối của bản sao (xem [Section 19.2.4, “Relay Log and Replication Metadata Repositories”](https://dev.mysql.com/doc/refman/9.7/en/replica-logs.html "19.2.4 Relay Log and Replication Metadata Repositories")).
+
+
+
