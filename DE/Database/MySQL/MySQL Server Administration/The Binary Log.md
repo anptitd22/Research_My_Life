@@ -41,5 +41,4 @@ Nếu bạn đang sử dụng nhật ký nhị phân và ghi nhật ký theo hà
 
 Việc ghi nhật ký nhị phân cho các chương trình được lưu trữ được thực hiện như mô tả trong  [Section 27.9, “Stored Program Binary Logging”](https://dev.mysql.com/doc/refman/9.7/en/stored-programs-logging.html "27.9 Stored Program Binary Logging").
 
-
-
+Nguồn: https://dev.mysql.com/doc/refman/9.7/en/binary-log.html
