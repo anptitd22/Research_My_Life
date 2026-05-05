@@ -2,6 +2,8 @@
 
 OPA tách biệt việc ra quyết định chính sách khỏi việc thực thi chính sách. Khi phần mềm của bạn cần đưa ra quyết định về chính sách, nó sẽ truy vấn OPA và cung cấp dữ liệu có cấu trúc (ví dụ: JSON) làm đầu vào. OPA chấp nhận dữ liệu có cấu trúc bất kỳ làm đầu vào.
 
+![alt][images/OPA/opa_concept1.png]
+
 OPA đưa ra các quyết định chính sách bằng cách đánh giá đầu vào truy vấn so với các chính sách và dữ liệu. OPA và Rego không phụ thuộc vào lĩnh vực cụ thể, vì vậy bạn có thể mô tả hầu hết mọi loại bất biến trong các chính sách của mình. Ví dụ:
 - Người dùng nào có thể truy cập tài nguyên nào. 
 - Những subnets nào cho phép lưu lượng truy cập đi ra? 
@@ -12,6 +14,48 @@ OPA đưa ra các quyết định chính sách bằng cách đánh giá đầu v
 
 Các quyết định chính sách không chỉ giới hạn ở các câu trả lời đơn giản có/không hoặc cho phép/từ chối. Giống như dữ liệu đầu vào của truy vấn, các chính sách của bạn có thể tạo ra dữ liệu có cấu trúc tùy ý làm đầu ra.
 
+Hãy xem một ví dụ. Giả sử bạn làm việc cho một tổ chức có cơ sở hạ tầng mạng như sau:
+
+![alt][images/OPA/opa_concept2.png]
+
+Hệ thống này bao gồm ba loại linh kiện: 
+- Máy chủ lắng nghe trên một loạt các cổng (cho các giao thức khác nhau như http, ssh, v.v.) 
+- Mạng lưới kết nối các máy chủ và có thể là mạng công cộng hoặc mạng riêng. Mạng công cộng được kết nối với Internet. 
+- Cổng kết nối máy chủ với mạng.
+
+Tất cả các máy chủ, mạng và cổng đều được cấu hình bằng cách sử dụng cơ sở hạ tầng dưới dạng mã. Cấu hình cơ sở hạ tầng được chỉ định trong định dạng JSON sau:
+
+```rego
+{
+  "servers": [
+    { "id": "app", "protocols": ["https", "ssh"], "ports": ["p1", "p2", "p3"] },
+    { "id": "db", "protocols": ["mysql"], "ports": ["p3"] },
+    { "id": "cache", "protocols": ["memcache"], "ports": ["p3"] },
+    { "id": "ci", "protocols": ["http"], "ports": ["p1", "p2"] },
+    { "id": "busybox", "protocols": ["telnet"], "ports": ["p1"] }
+  ],
+  "networks": [
+    { "id": "net1", "public": false },
+    { "id": "net2", "public": false },
+    { "id": "net3", "public": true },
+    { "id": "net4", "public": true }
+  ],
+  "ports": [
+    { "id": "p1", "network": "net1" },
+    { "id": "p2", "network": "net3" },
+    { "id": "p3", "network": "net2" }
+  ]
+}
+```
+
+Tổ chức của bạn đã thiết lập chính sách bảo mật sau đây và cần phải thực hiện chính sách này:
+
+- Các máy chủ có thể truy cập từ Internet không được phép để lộ giao thức 'http' không an toàn.
+- Máy chủ không được phép để lộ giao thức 'telnet'.
+
+Chính sách này cần được thực thi khi cấp phát máy chủ, mạng và cổng, và nhóm tuân thủ muốn định kỳ kiểm tra hệ thống để tìm ra các máy chủ vi phạm chính sách.
+
+Hãy cùng tìm hiểu xem OPA có thể giúp thực hiện chính sách này như thế nào.
 ## Writing Policy with Rego
 
 Các chính sách OPA được thể hiện bằng một ngôn ngữ khai báo cấp cao gọi là Rego. Rego (phát âm là "ray-go") được thiết kế đặc biệt để thể hiện các chính sách trên các cấu trúc dữ liệu phân cấp phức tạp. Để biết thông tin chi tiết về Rego, hãy xem tài liệu về [Policy Language](https://www.openpolicyagent.org/docs/policy-language).
@@ -30,12 +74,70 @@ package servers
 output := input.servers
 ```
 
+```
+[
+  {
+    "id": "app",
+    "ports": [
+      "p1",
+      "p2",
+      "p3"
+    ],
+    "protocols": [
+      "https",
+      "ssh"
+    ]
+  },
+  {
+    "id": "db",
+    "ports": [
+      "p3"
+    ],
+    "protocols": [
+      "mysql"
+    ]
+  },
+  {
+    "id": "cache",
+    "ports": [
+      "p3"
+    ],
+    "protocols": [
+      "memcache"
+    ]
+  },
+  {
+    "id": "ci",
+    "ports": [
+      "p1",
+      "p2"
+    ],
+    "protocols": [
+      "http"
+    ]
+  },
+  {
+    "id": "busybox",
+    "ports": [
+      "p1"
+    ],
+    "protocols": [
+      "telnet"
+    ]
+  }
+]
+```
+
 Để tham chiếu đến các phần tử mảng, bạn có thể sử dụng cú pháp dấu ngoặc vuông quen thuộc:
 
 ```rego
 package servers
 
 output := input.servers[0].protocols[0]
+```
+
+```
+"https"
 ```
 
 >[!tip]
@@ -49,6 +151,10 @@ package servers
 output := input.foobar
 ```
 
+```
+undefined
+```
+
 Các quyết định chính sách đơn giản nhất được đưa ra bằng cách viết các biểu thức thực hiện các phép toán logic trên dữ liệu đầu vào. Ví dụ, chúng ta có thể kiểm tra xem một máy chủ có ID cụ thể hay không bằng cách sử dụng phép kiểm tra bằng với toán tử `==`.
 
 ```rego
@@ -57,12 +163,20 @@ package servers
 output := input.servers[0].id == "app"
 ```
 
+```
+true
+```
+
 OPA bao gồm một tập hợp các hàm tích hợp sẵn ([built-in functions](https://www.openpolicyagent.org/docs/policy-reference/builtins)) mà bạn có thể sử dụng để thực hiện các thao tác thông thường như xử lý chuỗi, khớp biểu thức chính quy, phép toán số học, phép tổng hợp, v.v.
 
 ```rego
 package servers
 
 output := count(input.servers[0].protocols) >= 1
+```
+
+```
+true
 ```
 
 Để các truy vấn tạo ra kết quả, tất cả các biểu thức trong truy vấn phải đúng hoặc được định nghĩa. Bạn có thể tách các biểu thức trên nhiều dòng (hoặc tùy chọn nối chúng bằng `;` - nghĩa là phép AND, trên cùng một dòng):
@@ -76,6 +190,20 @@ output if {
 }
 ```
 
+or
+
+```rego
+package servers
+
+output if {
+    input.servers[0].id == "app"; input.servers[0].protocols[0] == "https"
+}
+```
+
+```
+true
+```
+
 Nếu bất kỳ biểu thức nào trong truy vấn không đúng (hoặc không được định nghĩa), kết quả sẽ là không xác định. Trong ví dụ bên dưới, biểu thức thứ hai là false:
 
 ```rego
@@ -87,9 +215,11 @@ output if {
 }
 ```
 
-
+```
+undefined
+```
 #### Note
-Các biểu thức chỉ được kết hợp với nhau bằng toán tử `AND` khi chúng nằm trong cùng một phần thân quy tắc. Trong ví dụ này, các kiểm tra đối với `input.servers` được kết hợp bằng toán tử `OR` vì chúng nằm trong các phần thân quy tắc khác nhau. Xem phần Toán tử OR logic trong mục Quy tắc bên dưới để biết thêm chi tiết.
+Các biểu thức chỉ được kết hợp với nhau bằng toán tử `AND` khi chúng nằm trong cùng một phần thân quy tắc. Trong ví dụ này, các kiểm tra đối với `input.servers` được kết hợp bằng toán tử `OR` vì chúng nằm trong các phần thân quy tắc khác nhau. Xem phần [Logical OR](https://www.openpolicyagent.org/docs#logical-or) trong mục Quy tắc bên dưới để biết thêm chi tiết.
 
 ```rego
 output if {
