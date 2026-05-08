@@ -50,7 +50,7 @@ See Also [disk-bound](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glo
 
 Một nhóm các trang trong một tablespace. Với kích thước trang mặc định là 16KB, một extent chứa 64 trang. Trong MySQL 5.6, kích thước trang cho một instance InnoDB có thể là 4KB, 8KB hoặc 16KB, được điều khiển bởi tùy chọn cấu hình  [`innodb_page_size`](https://dev.mysql.com/doc/refman/9.7/en/innodb-parameters.html#sysvar_innodb_page_size). Đối với kích thước trang 4KB, 8KB và 16KB, kích thước extent luôn là 1MB (hoặc 1048576 byte).
 
-Trong MySQL 5.7.6, hỗ trợ kích thước trang InnoDB 32KB và 64KB đã được thêm vào. Đối với kích thước trang 32KB, kích thước vùng nhớ mở rộng là 2MB. Đối với kích thước trang 64KB, kích thước vùng nhớ mở rộng là 4MB.
+Trong MySQL 5.7.6, hỗ trợ kích thước trang InnoDB 32KB và 64KB đã được thêm vào. Đối với kích thước trang 32KB, kích thước vùng nhớ extent là 2MB. Đối với kích thước trang 64KB, kích thước vùng nhớ extent là 4MB.
 
 Các tính năng của InnoDB như **segments**, yêu cầu **read-ahead** và **doublewrite buffer** sử dụng các thao tác I/O để đọc, ghi, cấp phát hoặc giải phóng dữ liệu từng phần một.
 
@@ -67,6 +67,20 @@ Các tablespace "file-per-table" (mỗi tablespace chứa dữ liệu cho một 
 Không gian bảng tổng quát (được giới thiệu trong MySQL 5.7.6), có thể chứa dữ liệu cho nhiều bảng InnoDB, cũng được biểu diễn bằng tệp dữ liệu .ibd.
 
 See Also [file-per-table](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_file_per_table), [general tablespace](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_general_tablespace), [ibdata file](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_ibdata_file), [index](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_index), [tablespace](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_tablespace).
+
+## [segment](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_segment)
+
+Một segment bên trong một tablespace của InnoDB. Nếu một tablespace tương tự như một thư mục, thì các segment tương tự như các tập tin bên trong thư mục đó. Một segment có thể mở rộng. Các segment mới có thể được tạo ra.
+
+Ví dụ, trong một tablespace có cấu trúc "mỗi bảng một tệp", dữ liệu của bảng nằm trong một segment và mỗi chỉ mục liên kết nằm trong một segment riêng biệt. Tablespace hệ thống chứa nhiều segment khác nhau, vì nó có thể chứa nhiều bảng và các chỉ mục liên kết của chúng. Trước MySQL 8.0, tablespace hệ thống cũng bao gồm một hoặc nhiều segment rollback được sử dụng cho undo logs.
+
+Các segment sẽ tăng hoặc giảm dung lượng khi dữ liệu được chèn và xóa. Khi một segment cần thêm dung lượng, nó sẽ được mở rộng thêm một extent (1 megabyte) mỗi lần. Tương tự, một phân đoạn sẽ giải phóng dung lượng tương đương một extent khi tất cả dữ liệu trong extent đó không còn cần thiết nữa.
+
+## [tablespace](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_tablespace)
+
+.....
+
+See Also [data files](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_data_files), [file-per-table](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_file_per_table), [general tablespace](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_general_tablespace), [index](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_index), [innodb_file_per_table](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_innodb_file_per_table).
 
 # CPU & I/O bound
 
