@@ -505,3 +505,11 @@ async def main():
     await coro # Bây giờ mới bắt đầu chạy, phải đợi đủ 1 giây nữa.
 ```
 
+
+# Runner
+
+https://docs.python.org/3/library/asyncio-runner.html#asyncio.run
+
+Queues
+
+https://docs.python.org/3/library/asyncio-queue.html#asyncio-queues
