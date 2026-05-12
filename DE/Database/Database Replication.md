@@ -149,3 +149,5 @@ Mô hình sao chép master-slave hoạt động bằng cách sao chép các thay
 ### Applications
 
 Kiến trúc này được sử dụng rộng rãi trong các hệ thống yêu cầu hiệu năng cao và read scalability.
+
+Thiết kế: CQRS
