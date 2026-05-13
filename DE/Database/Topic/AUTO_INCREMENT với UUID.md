@@ -1,0 +1,1 @@
+Tham khảo: https://stackoverflow.com/questions/15360245/when-using-uuids-should-i-also-use-auto-increment
