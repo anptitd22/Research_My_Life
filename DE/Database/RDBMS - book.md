@@ -119,6 +119,8 @@ Bộ xử lý truy vấn quan hệ (Relational Query Processor) có nhiệm vụ
 - Hệ thống khám phá không gian rộng lớn của các kế hoạch (bao gồm nhiều kiểu cây thực thi hoặc cấu trúc kết nối khác nhau) thông qua các thuật toán tìm kiếm như quy hoạch động (dynamic programming) hoặc tìm kiếm từ trên xuống (top-down),. Kế hoạch tối ưu thường được biên dịch thành một cấu trúc dữ liệu để diễn dịch hoặc mã op-codes (tương tự như Java byte codes).
 - Để giảm thiểu thời gian tối ưu hóa trong các lần sau, các kế hoạch này thường được lưu trong bộ nhớ đệm (query plan cache) để tái sử dụng ngay lập tức nếu một câu lệnh tương tự được gọi.
 
+![alt][images/Database/Query_optimizer1.png]
+
 **4. Thực thi truy vấn (Query Executor)** Trình thực thi nhận kế hoạch truy vấn dưới dạng một đồ thị luồng dữ liệu và thường hoạt động theo **mô hình vòng lặp (iterator model)**:
 
 - Mỗi toán tử trong kế hoạch truy vấn (như quét file, quét chỉ mục, sort, hash-join) là một lớp con của đối tượng iterator, cung cấp hàm `get_next()`. Hàm này liên tục lấy từng dữ liệu trả về cho toán tử cha, giúp hệ thống không cần tạo nhiều luồng (single-threaded) mà vẫn đạt hiệu quả rất cao do kết hợp chặt chẽ giữa luồng dữ liệu và luồng điều khiển.
