@@ -117,3 +117,15 @@ See Also [denormalized](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#g
 Vùng nhớ hoặc vùng đĩa được sử dụng để lưu trữ tạm thời. Dữ liệu được đệm trong bộ nhớ để có thể ghi vào đĩa một cách hiệu quả, với một vài thao tác I/O lớn thay vì nhiều thao tác nhỏ. Dữ liệu được đệm trên đĩa để tăng độ tin cậy, sao cho có thể khôi phục ngay cả khi xảy ra sự cố hoặc lỗi khác vào thời điểm tồi tệ nhất. Các loại bộ đệm chính được InnoDB sử dụng là buffer pool, doublewrite buffer và change buffer.
 
 Nguồn: [[MySQL  MySQL 9.7 Reference Manual  MySQL Glossary]]
+
+## Shared lock
+
+Một loại khóa cho phép các giao dịch khác đọc đối tượng bị khóa và cũng có thể giành được các shared locks khác trên đối tượng đó, nhưng không được phép ghi vào đối tượng. Ngược lại với khóa độc quyền.
+
+See Also [exclusive lock](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_exclusive_lock), [lock](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_lock), [transaction](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_transaction).
+
+## exclusive lock
+
+Một loại khóa ngăn chặn bất kỳ giao dịch nào khác khóa cùng một hàng. Tùy thuộc vào **isolation level**, loại khóa này có thể chặn các giao dịch khác ghi vào cùng một hàng, hoặc cũng có thể chặn các giao dịch khác đọc cùng một hàng. Mức độ cách ly mặc định của InnoDB, REPEATABLE READ, cho phép đồng thời cao hơn bằng cách cho phép các giao dịch đọc các hàng có khóa độc quyền, một kỹ thuật được gọi là đọc nhất quán (**consistent read**).
+
+See Also [concurrency](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_concurrency), [consistent read](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_consistent_read), [isolation level](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_isolation_level), [lock](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_lock), [REPEATABLE READ](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_repeatable_read), [shared lock](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_shared_lock), [transaction](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_transaction).
