@@ -112,3 +112,8 @@ Chiến lược thiết kế cơ sở dữ liệu trong đó dữ liệu đượ
 
 See Also [denormalized](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_denormalized), [foreign key](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_foreign_key), [OLTP](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_oltp), [relational](https://dev.mysql.com/doc/refman/9.7/en/glossary.html#glos_relational).
 
+## buffer
+
+Vùng nhớ hoặc vùng đĩa được sử dụng để lưu trữ tạm thời. Dữ liệu được đệm trong bộ nhớ để có thể ghi vào đĩa một cách hiệu quả, với một vài thao tác I/O lớn thay vì nhiều thao tác nhỏ. Dữ liệu được đệm trên đĩa để tăng độ tin cậy, sao cho có thể khôi phục ngay cả khi xảy ra sự cố hoặc lỗi khác vào thời điểm tồi tệ nhất. Các loại bộ đệm chính được InnoDB sử dụng là buffer pool, doublewrite buffer và change buffer.
+
+Nguồn: [[MySQL  MySQL 9.7 Reference Manual  MySQL Glossary]]

@@ -62,28 +62,28 @@ InnoDB là một công cụ lưu trữ đa năng, cân bằng giữa độ tin c
 
 **InnoDB Storage Engine Features**
 
-|Feature|Support|
-|---|---|
-|**B-tree indexes**|Yes|
-|**Backup/point-in-time recovery** (Implemented in the server, rather than in the storage engine.)|Yes|
-|**Cluster database support**|No|
-|**Clustered indexes**|Yes|
-|**Compressed data**|Yes|
-|**Data caches**|Yes|
-|**Encrypted data**|Yes (Implemented in the server via encryption functions; In MySQL 5.7 and later, data-at-rest encryption is supported.)|
-|**Foreign key support**|Yes|
-|**Full-text search indexes**|Yes (Support for FULLTEXT indexes is available in MySQL 5.6 and later.)|
-|**Geospatial data type support**|Yes|
-|**Geospatial indexing support**|Yes (Support for geospatial indexing is available in MySQL 5.7 and later.)|
-|**Hash indexes**|No (InnoDB utilizes hash indexes internally for its Adaptive Hash Index feature.)|
-|**Index caches**|Yes|
-|**Locking granularity**|Row|
-|**MVCC**|Yes|
-|**Replication support** (Implemented in the server, rather than in the storage engine.)|Yes|
-|**Storage limits**|64TB|
-|**T-tree indexes**|No|
-|**Transactions**|Yes|
-|**Update statistics for data dictionary**|Yes|
+| Feature                                                                                           | Support                                                                                                                 |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **B-tree indexes**                                                                                | Yes                                                                                                                     |
+| **Backup/point-in-time recovery** (Implemented in the server, rather than in the storage engine.) | Yes                                                                                                                     |
+| **Cluster database support**                                                                      | No                                                                                                                      |
+| **Clustered indexes**                                                                             | Yes                                                                                                                     |
+| **Compressed data**                                                                               | Yes                                                                                                                     |
+| **Data caches**                                                                                   | Yes                                                                                                                     |
+| **Encrypted data**                                                                                | Yes (Implemented in the server via encryption functions; In MySQL 5.7 and later, data-at-rest encryption is supported.) |
+| **Foreign key support**                                                                           | Yes                                                                                                                     |
+| **Full-text search indexes**                                                                      | Yes (Support for FULLTEXT indexes is available in MySQL 5.6 and later.)                                                 |
+| **Geospatial data type support**                                                                  | Yes                                                                                                                     |
+| **Geospatial indexing support**                                                                   | Yes (Support for geospatial indexing is available in MySQL 5.7 and later.)                                              |
+| **Hash indexes**                                                                                  | No (InnoDB utilizes hash indexes internally for its Adaptive Hash Index feature.)                                       |
+| **Index caches**                                                                                  | Yes                                                                                                                     |
+| **Locking granularity**                                                                           | Row                                                                                                                     |
+| **MVCC**                                                                                          | Yes                                                                                                                     |
+| **Replication support** (Implemented in the server, rather than in the storage engine.)           | Yes                                                                                                                     |
+| **Storage limits**                                                                                | 64TB                                                                                                                    |
+| **T-tree indexes**                                                                                | No                                                                                                                      |
+| **Transactions**                                                                                  | Yes                                                                                                                     |
+| **Update statistics for data dictionary**                                                         | Yes                                                                                                                     |
 Để so sánh các tính năng của InnoDB với các công cụ lưu trữ khác được cung cấp cùng với MySQL, hãy xem bảng Tính năng của công cụ lưu trữ trong [Chapter 18, _Alternative Storage Engines_](https://dev.mysql.com/doc/refman/9.3/en/storage-engines.html "Chapter 18 Alternative Storage Engines").
 
 # MyISAM
