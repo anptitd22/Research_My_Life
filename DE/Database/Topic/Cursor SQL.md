@@ -102,20 +102,50 @@ END;
 
 ## Cursor Syntax Breakdown in SQL
 
+### 1. Declare a Cursor
+
+### 2. Open Cursor Connection
+
+### 3. Fetch Data from the Cursor
+
+### 4. Close Cursor Connection
+
+### 5. Deallocate Cursor Memory
+
+## How To Create an Implicit Cursor
+
+## SQL Cursor Exceptions
+
+### 1. Duplicate Value Error
+
+### 2. Invalid Cursor State
+
+### 3. Lock Timeout
+
+### Comparison of Implicit and Explicit Cursors
+
+|Implicit Cursors|Explicit Cursors|
+|---|---|
+|Automatically created by the SQL engine|Manually created by the user|
+|No declaration required|Requires declaration before use|
+|Managed automatically by SQL|Controlled using open, fetch and close|
+|Used for simple DML operations|Used for complex row-by-row processing|
+|Provide less control|Provide more control and flexibility|
+|Faster and more efficient|Slower due to manual handling|
 
 ## Advantages of Using Cursors
 
-- ****Row-by-row processing:****
-- ****Iterative handling:****
-- ****Handles complex relationships:****
-- ****Conditional operations:****
-- ****Flexible for complex cases:****
+- ****Row-by-row processing:**** Hữu ích cho các thao tác chi tiết.
+- ****Iterative handling:**** Có thể lặp qua dữ liệu nhiều lần.
+- ****Handles complex relationships:**** Làm việc với dữ liệu phân cấp/phức tạp
+- ****Conditional operations:**** Hỗ trợ cập nhật, xóa và chèn dữ liệu dựa trên điều kiện.
+- ****Flexible for complex cases:**** Hữu ích khi các truy vấn dựa trên tập hợp thất bại
 
 ## Limitations of Cursors
 
-- ****Slow performance:**** 
-- ****High resource usage:****
-- ****Complex syntax:****
-- ****Not suitable for large data:****
+- ****Slow performance:**** Xử lý từng hàng một
+- ****High resource usage:**** Tiêu tốn bộ nhớ và khóa dữ liệu
+- ****Complex syntax:**** Yêu cầu nhiều bước (khai báo, mở, lấy dữ liệu, đóng).
+- ****Not suitable for large data:**** Hiệu năng giảm khi xử lý tập dữ liệu lớn.
 
 Nguồn: https://www.geeksforgeeks.org/sql/what-is-cursor-in-sql/
