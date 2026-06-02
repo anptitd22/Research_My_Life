@@ -12,16 +12,43 @@ Số phiên bản định dạng được tăng lên khi các tính năng mới 
 
 ### Version 1: Analytic Data Tables
 
+Phiên bản 1 của đặc tả Iceberg định nghĩa cách quản lý các bảng phân tích lớn bằng cách sử dụng các định dạng tệp bất biến: Parquet, Avro và ORC.
+
+Tất cả các tệp dữ liệu và siêu dữ liệu phiên bản 1 đều hợp lệ sau khi nâng cấp bảng lên phiên bản 2. [Appendix E](https://iceberg.apache.org/spec/#version-2) mô tả cách thiết lập giá trị mặc định cho các trường phiên bản 2 khi đọc siêu dữ liệu phiên bản 1.
+
 ### Version 2: Row-level Deletes
+
+Phiên bản 2 của đặc tả Iceberg bổ sung chức năng cập nhật và xóa ở cấp độ hàng cho các bảng phân tích có tệp bất biến (analytic tables with immutable files).
+
+Thay đổi chính trong phiên bản 2 là bổ sung chức năng xóa tệp để mã hóa các hàng bị xóa trong các tệp dữ liệu hiện có. Phiên bản này có thể được sử dụng để xóa hoặc thay thế các hàng riêng lẻ trong các tệp dữ liệu bất biến mà không cần ghi đè lên các tệp đó.
+
+Ngoài việc xóa dữ liệu ở cấp độ hàng, phiên bản 2 còn đưa ra một số yêu cầu khắt khe hơn đối với người ghi dữ liệu. Toàn bộ các thay đổi được liệt kê trong [Appendix E](https://iceberg.apache.org/spec/#version-2).
 
 ### Version 3: Extended Types and Capabilities
 
+Phiên bản 3 của đặc tả Iceberg mở rộng các kiểu dữ liệu và cấu trúc metadata hiện có để bổ sung các khả năng mới.
+
+- Kiểu dữ liệu mới: nanosecond timestamp(tz), unknown, variant, geometry, geography
+- Hỗ trợ giá trị mặc định cho các cột
+- Các phép biến đổi đa tham số dùng cho phân vùng và sắp xếp
+- Row Lineage tracking
+- Binary deletion vectors
+- Khóa mã hóa bảng (Table encryption keys)
+
+Toàn bộ các thay đổi được liệt kê trong [Appendix E](https://iceberg.apache.org/spec/#version-3).
+
 ### Version 4: Metadata Structure and Representation
+
+Phiên bản 4 của đặc tả Iceberg tái cấu trúc metadata để cải thiện hiệu suất và bổ sung các khả năng mới.
+
+- Hỗ trợ [relative locations](https://iceberg.apache.org/spec/#file-locations-in-metadata) trong metadata fields
+
+Toàn bộ các thay đổi được liệt kê trong [Appendix E](https://iceberg.apache.org/spec/#version-4).
 
 ## Goals
 
 - **Serializable isolation**: Các thao tác đọc (read) sẽ được tách biệt khỏi các thao tác ghi (write) đồng thời và luôn sử dụng commited snapshot của dữ liệu bảng. Các thao tác ghi sẽ hỗ trợ xóa và thêm tệp trong một lần thao tác duy nhất và không bao giờ hiển thị một phần. Người đọc sẽ không chiếm giữ khóa.
-- Speed: Các thao tác sẽ sử dụng các lệnh gọi từ xa O(1) để lập kế hoạch các tệp cho quá trình quét chứ không phải O(n) trong đó n tăng theo kích thước của bảng, chẳng hạn như số lượng phân vùng hoặc tệp.
+- Speed: Các thao tác sẽ sử dụng các lệnh gọi từ xa (remote calls) O(1) để lập kế hoạch các tệp cho quá trình quét và không phải O(n) trong đó n tăng theo kích thước của bảng, chẳng hạn như số lượng phân vùng hoặc tệp.
 - **Scale**: Việc lập kế hoạch công việc sẽ chủ yếu do clients đảm nhiệm và không bị tắc nghẽn ở central metadata store. Metadata sẽ bao gồm thông tin cần thiết cho việc tối ưu hóa dựa trên chi phí.
 - **Evolution**: Bảng sẽ hỗ trợ đầy đủ quá trình schema và partition spec evolution. Schema evolution hỗ trợ thêm, xóa, sắp xếp lại và đổi tên cột một cách an toàn, kể cả trong cấu trúc lồng nhau.
 - **Storage separation**: Việc phân vùng sẽ được cấu hình trong bảng. Việc đọc dữ liệu sẽ được lập kế hoạch bằng cách sử dụng các điều kiện lọc trên giá trị dữ liệu, chứ không phải giá trị phân vùng. Các bảng sẽ hỗ trợ các partition schemes có thể thay đổi (evolving).
@@ -39,61 +66,203 @@ Các tập tin dữ liệu trong snapshot được theo dõi bởi một hoặc 
 
 Các tệp kê khai (manifests) tạo nên snapshot được lưu trữ trong một tệp danh sách tệp kê khai (manifest list file). Mỗi tệp danh sách tệp kê (manifest list) khai lưu trữ metadata về các tệp kê khai (manifests), bao gồm số liệu thống kê phân vùng và số lượng tệp dữ liệu. Các số liệu thống kê này được sử dụng để tránh đọc các tệp kê khai (manifests) không cần thiết cho một thao tác.
 
-Xem thêm:
-
----
-1. Bản chất thay đổi: Quản lý theo "File" thay vì "Thư mục"
-
-Trong kiến trúc cũ (Hive), khi bạn thực hiện câu lệnh ghi dữ liệu, kết quả sẽ được ghi trực tiếp vào một thư mục (directory). Nếu một câu lệnh đang ghi dở mà bị sập, thư mục đó sẽ chứa dữ liệu "rác" (partial data), dẫn đến việc người khác vào đọc sẽ bị sai.
-Iceberg thay đổi cuộc chơi bằng cách:
-- **Ghi in-place (tại chỗ):** Các file dữ liệu mới (`.parquet`, `.orc`, `.avro`) cứ việc ghi thoải mái xuống Storage (MinIO/S3). Nhưng lúc này, hệ thống **chưa ai nhìn thấy** các file này cả.
-- **Atomic Commit (Cam kết nguyên tử):** Chỉ khi toàn bộ các file được ghi xong xuôi, một hành động "Commit" được kích hoạt để cập nhật trạng thái bảng. Nếu commit thành công, dữ liệu mới chính thức xuất hiện. Nếu commit lỗi, các file vừa ghi sẽ bị bỏ qua (đảm bảo tính ACID).
-
-2. Chi tiết 3 Tầng Metadata của Apache Iceberg
-Để quản lý được việc "commit" và trạng thái bảng, Iceberg chia Metadata thành 3 tầng file được lưu trữ dạng cây (Tree Structure):
-
-### Tầng 1: Table Metadata File (`.metadata.json`)
-
-Đây là "đầu não" quản lý trạng thái của bảng. Mỗi khi bảng có thay đổi (thêm dữ liệu, thay đổi schema, thay đổi cấu hình phân vùng), một file `.metadata.json` mới sẽ được tạo ra và thay thế file cũ bằng một cú **Atomic Swap** (đổi con trỏ ở tầng Catalog như Nessie/Hive Metastore).
-
-File này chứa:
-
-- **Schema:** Cấu trúc các cột (định danh bằng Field ID như đã nói ở câu hỏi trước).
-    
-- **Partition Specs:** Cấu hình phân vùng (ví dụ: phân vùng theo ngày, theo tháng).
-    
-- **Snapshots:** Lịch sử các phiên bản của bảng. Mỗi Snapshot đại diện cho trạng thái toàn bộ dữ liệu tại một thời điểm cụ thể (đây chính là chìa khóa để làm **Time Travel** - truy vấn dữ liệu quá khứ).
-    
-### Tầng 2: Manifest List File (`snap-*.avro`)
-
-Mỗi một **Snapshot** ở Tầng 1 sẽ trỏ tương ứng đến một file **Manifest List**.
-
-- Nhiệm vụ của Manifest List là quản lý danh sách các file **Manifest** (Tầng 3) cấu thành nên Snapshot đó.
-    
-- **Tối ưu hóa (Pruning):** File này lưu trữ các thông tin thống kê cấp cao (như dải giá trị của partition trong từng manifest, số lượng data file). Nhờ vậy, khi bạn query, Engine (Trino/Spark) chỉ cần đọc Manifest List là biết ngay cần phải xuống đọc tiếp những Manifest nào, bỏ qua (skip) những Manifest nào không cần thiết mà không cần quét toàn bộ bảng.
-    
-### Tầng 3: Manifest File (`*.avro`)
-
-Đây là tầng metadata cuối cùng trước khi chạm đến dữ liệu thực tế. Một Manifest File quản lý một tập hợp các **Data Files**.
-
-- Nó chứa một hàng (row) cho **mỗi data file** trong bảng.
-    
-- Lưu trữ chi tiết: Đường dẫn file (URI), dữ liệu phân vùng của file đó, và đặc biệt là **Metrics** (giá trị Min/Max của các cột, số lượng dòng, số lượng giá trị Null).
-    
-- **Tính năng tái sử dụng (Reuse):** Như đoạn văn của bạn có nêu: _""Manifest files are reused across snapshots...""_. Khi bạn append thêm dữ liệu mới, Iceberg chỉ tạo ra 1 manifest mới cho file dữ liệu mới đó, rồi tạo một Manifest List mới trỏ đến cả Manifest cũ lẫn Manifest mới. Hành động này giúp Iceberg chạy cực nhanh vì không phải viết lại metadata của các dữ liệu cũ (vốn ít thay đổi).
-
----
+Xem thêm: [[illuminating]]
 
 ### Optimistic Concurrency
 
 Việc atomic swap một table metadata file này với một table metadata file khác tạo cơ sở cho serializable isolation. Người đọc sử dụng snapshot hiện tại khi họ tải table metadata và không bị ảnh hưởng bởi các thay đổi cho đến khi họ làm mới và chọn vị trí metadata mới.
 
+Người viết tạo các table metadata files một cách lạc quan (optimistically), giả định rằng phiên bản hiện tại sẽ không bị thay đổi trước khi writer thực hiện commit. Sau khi writer tạo bản cập nhật, họ sẽ commit bằng cách hoán đổi con trỏ tệp metadata của bảng từ phiên bản cơ sở sang phiên bản mới.
+
+Nếu snapshot mà bản cập nhật dựa trên đó không còn chính xác, người ghi phải thử lại quá trình cập nhật dựa trên phiên bản chính xác mới hiện tại. Một số thao tác hỗ trợ thử lại bằng cách áp dụng lại các thay đổi metadata và commiting, trong những điều kiện được xác định rõ. Ví dụ, một thay đổi ghi đè lên các tệp có thể được áp dụng cho snapshot bảng mới nếu tất cả các tệp được ghi đè vẫn còn trong bảng.
+
+Các điều kiện cần thiết để thao tác ghi thành công sẽ xác định isolation level. Người ghi có thể chọn những gì cần xác thực và có thể đưa ra các đảm bảo isolation khác nhau.
+
 ### Sequence Numbers
+
+Tuổi đời tương đối của dữ liệu và các tập tin đã xóa phụ thuộc vào một số thứ tự được gán cho mỗi lần commit thành công. Khi một snapshot được tạo cho một lần commit, nó được gán một cách lạc quan (optimistically) số thứ tự tiếp theo (next sequence number) và số này được ghi vào metadata của snapshot. Nếu lần commit thất bại và phải thử lại, số thứ tự sẽ được gán lại và ghi vào metadata của snapshot mới.
+
+Tất cả các tệp kê khai (manifests), tệp dữ liệu (data files) và tệp xóa (delete files) được tạo cho một snapshot đều kế thừa số thứ tự của snapshot đó. Metadata của tệp kê khai (manifests) trong danh sách kê khai (manifest list) lưu trữ số thứ tự của tệp kê khai. Các mục nhập tệp dữ liệu và metadata mới được ghi với giá trị `null` thay cho số thứ tự, và số thứ tự này sẽ được thay thế bằng số thứ tự của tệp kê khai (manifest) tại thời điểm đọc. Khi một tệp dữ liệu hoặc tệp xóa được ghi vào một tệp kê khai mới (dưới dạng "existing"), số thứ tự thừa kế được ghi lại để đảm bảo nó không thay đổi sau khi được thừa kế lần đầu.
+
+Việc kế thừa số thứ tự từ metadata của manifest cho phép ghi một manifest mới một lần và tái sử dụng nó trong các lần thử lại commit. Để thay đổi số thứ tự cho một lần thử lại, chỉ cần ghi lại danh sách manifest, điều này dù sao cũng sẽ được ghi lại với bộ manifest mới nhất.
 
 ### Row-level Deletes
 
+Các thao tác xóa ở cấp độ hàng được lưu trữ trong các tệp xóa.
+
+Có hai loại thao tác xóa ở cấp độ hàng:
+
+- **Position deletes**: Đánh dấu hàng bị xóa bằng đường dẫn tệp dữ liệu và vị trí hàng trong tệp dữ liệu. Việc xóa theo vị trí được mã hóa trong tệp xóa theo vị trí ([_position delete file_](https://iceberg.apache.org/spec/#position-delete-files)) (V2) hoặc [_deletion vector_](https://iceberg.apache.org/spec/#deletion-vectors) (V3 trở lên).
+- **Equality deletes**: Đánh dấu một hàng bị xóa dựa trên một hoặc nhiều giá trị cột, ví dụ như id = 5. Các thao tác xóa bằng nhau được mã hóa trong tệp xóa bằng nhau ([_equality delete file_](https://iceberg.apache.org/spec/#equality-delete-files)).
+
+Giống như các tập tin dữ liệu, các tập tin xóa được theo dõi theo phân vùng. Nói chung, một tập tin xóa phải được áp dụng cho các tập tin dữ liệu cũ hơn có cùng phân vùng; xem [Scan Planning](https://iceberg.apache.org/spec/#scan-planning) để biết chi tiết. Các chỉ số cột có thể được sử dụng để xác định xem các hàng của tập tin xóa có trùng lặp với nội dung của tập tin dữ liệu hoặc phạm vi quét hay không.
+
 ### File System Operations
+
+Iceberg chỉ yêu cầu hệ thống tệp (file systems) hỗ trợ các thao tác sau:
+
+- **In-place write**: Các tập tin sẽ không được di chuyển hoặc sửa đổi sau khi đã được ghi.
+- **Seekable reads**: Các định dạng tệp dữ liệu yêu cầu hỗ trợ tìm kiếm
+- **Deletes**: Bảng sẽ xóa các tệp không còn được sử dụng nữa.
+
+Các yêu cầu này tương thích với các kho lưu trữ đối tượng, chẳng hạn như S3.
+
+Bảng dữ liệu không yêu cầu ghi truy cập ngẫu nhiên. Sau khi được ghi, các tệp dữ liệu và metadata sẽ không thể thay đổi cho đến khi chúng bị xóa.
+
+Các bảng không cần phải đổi tên, ngoại trừ các bảng sử dụng chức năng đổi tên nguyên tử (atomic) để thực hiện thao tác commit cho các tệp metadata mới.
 
 ### File Locations in Metadata
 
+Tất cả các trường vị trí trong định dạng phiên bản 3 trở xuống đều chứa đường dẫn đầy đủ.
+
+Phiên bản 4 của đặc tả Iceberg bổ sung hỗ trợ cho các vị trí tương đối trong metadata, cho phép di chuyển các bảng mà không cần ghi đè lên các tệp metadata. Các vị trí tương đối được cho phép trong tất cả các trường vị trí được theo dõi trong metadata và được giải quyết dựa trên vị trí cơ sở của bảng. Vị trí của bảng có thể được cố định trong metadata của bảng hoặc được suy luận, nhưng mục đích là để được quản lý và cung cấp bởi một catalog. Các yêu cầu về việc tương đối hóa và giải quyết được nêu trong mục Đường dẫn trong [Paths in Metadata](https://iceberg.apache.org/spec/#paths-in-metadata).
+
 ## Specification
+
+### Terms
+
+- **Schema** -- Tên và kiểu dữ liệu của các trường trong bảng.
+- **Partition spec** -- Định nghĩa về cách các giá trị phân vùng được tạo ra từ các trường dữ liệu
+- **Snapshot** -- Trạng thái của một bảng tại một thời điểm nhất định, bao gồm toàn bộ tập hợp các tệp dữ liệu.
+- **Manifest list** -- Một tập tin liệt kê các tập manifests files; một tập tin cho mỗi snapshot.
+- **Manifest** -- Một tập tin liệt kê dữ liệu hoặc delete files; một tập hợp con của snapshot.
+- **Data file** -- Một tập tin chứa các hàng của một bảng.
+- **Delete file** -- Một tệp mã hóa các hàng của bảng được xóa theo vị trí hoặc giá trị dữ liệu.
+- **Absolute path** -- Một chuỗi đường dẫn bao gồm [URI](https://datatracker.ietf.org/doc/html/rfc3986#section-3.1) scheme và có thể được sử dụng trực tiếp.
+- **Relative path** -- Một chuỗi đường dẫn không có URI scheme cần được giải quyết ([resolved](https://iceberg.apache.org/spec/#path-resolution)) dựa trên vị trí bảng.
+
+### Writer requirements[🔗](https://iceberg.apache.org/spec/#writer-requirements "Permanent link")
+
+Một số bảng trong tài liệu đặc tả này có các cột chỉ định yêu cầu đối với bảng theo phiên bản. Các yêu cầu này dành cho người ghi dữ liệu khi thêm các tệp metadata (bao gồm tệp kê khai (manifests files) và danh sách kê khai (manifest lists)) vào bảng với phiên bản đã cho.
+
+| Requirement | Write behavior                                        |
+| ----------- | ----------------------------------------------------- |
+| (blank)     | Trường này nên được bỏ qua.                           |
+| _optional_  | Bạn có thể điền thông tin vào trường này hoặc bỏ qua. |
+| _required_  | Trường này phải được viết                             |
+Người đọc nên khoan dung hơn vì các tệp v1 metadata files được cho phép trong các bảng v2 (hoặc các phiên bản sau này) để các bảng có thể được nâng cấp mà không cần viết lại cây metadata. Đối với danh sách manifest và các tệp manifest, bảng này hiển thị hành vi đọc dự kiến ​​cho các phiên bản sau này.
+
+|v1|v2|v2+ read behavior|
+|---|---|---|
+||_optional_|Read the field as _optional_|
+||_required_|Read the field as _optional_; it may be missing in v1 files|
+|_optional_||Ignore the field|
+|_optional_|_optional_|Read the field as _optional_|
+|_optional_|_required_|Read the field as _optional_; it may be missing in v1 files|
+|_required_||Ignore the field|
+|_required_|_optional_|Read the field as _optional_|
+|_required_|_required_|Fill in a default or throw an exception if the field is missing|
+
+...
+
+#### Writing data files[🔗](https://iceberg.apache.org/spec/#writing-data-files "Permanent link")
+...
+
+### Paths in Metadata[🔗](https://iceberg.apache.org/spec/#paths-in-metadata "Permanent link")
+
+...
+
+#### Path Resolution[🔗](https://iceberg.apache.org/spec/#path-resolution "Permanent link")
+
+...
+
+#### Path Relativization[🔗](https://iceberg.apache.org/spec/#path-relativization "Permanent link")
+
+...
+
+#### Table Location Specification[🔗](https://iceberg.apache.org/spec/#table-location-specification "Permanent link")
+
+...
+
+### Schemas and Data Types
+
+Schema của một bảng là một danh sách các cột được đặt tên. Tất cả các kiểu dữ liệu đều là kiểu dữ liệu nguyên thủy hoặc kiểu lồng nhau, bao gồm maps, lists hoặc structs. Schema của một bảng cũng là một kiểu cấu trúc.
+
+Để biết cách biểu diễn các kiểu dữ liệu này trong các định dạng tệp Avro, ORC và Parquet, xem Appendix A.
+
+#### Nested Types[🔗](https://iceberg.apache.org/spec/#nested-types "Permanent link")
+
+#### Semi-structured Types[🔗](https://iceberg.apache.org/spec/#semi-structured-types "Permanent link")
+
+#### Primitive Types[🔗](https://iceberg.apache.org/spec/#primitive-types "Permanent link")
+
+#### Default values[🔗](https://iceberg.apache.org/spec/#default-values "Permanent link")
+
+#### Schema Evolution[🔗](https://iceberg.apache.org/spec/#schema-evolution "Permanent link")
+
+#### Identifier Field IDs[🔗](https://iceberg.apache.org/spec/#identifier-field-ids "Permanent link")
+
+#### Reserved Field IDs[🔗](https://iceberg.apache.org/spec/#reserved-field-ids "Permanent link")
+
+#### Row Lineage[🔗](https://iceberg.apache.org/spec/#row-lineage "Permanent link")
+
+### Partitioning
+
+Các tệp dữ liệu được lưu trữ trong các manifest với một bộ giá trị phân vùng được sử dụng trong các quá trình quét để lọc ra các tệp không chứa bản ghi phù hợp với điều kiện lọc của quá trình quét. Giá trị phân vùng cho một tệp dữ liệu phải giống nhau đối với tất cả các bản ghi được lưu trữ trong tệp dữ liệu đó. (Manifest lưu trữ các tệp dữ liệu từ bất kỳ phân vùng nào, miễn là thông số kỹ thuật phân vùng giống nhau đối với các tệp dữ liệu.)
+
+Các bảng được cấu hình với một partition spec xác định cách tạo ra một bộ giá trị phân vùng từ một bản ghi. Partition spec có một danh sách các trường bao gồm:
+
+- ID cột nguồn hoặc danh sách ID cột nguồn từ schema của bảng.
+- **Partition field id** được sử dụng để xác định trường phân vùng và là duy nhất trong phạm vi một partition spec. Trong metadata bảng v2, mã này là duy nhất trên tất cả các partition spec.
+- Một phép biến đổi được áp dụng cho cột nguồn để tạo ra giá trị phân vùng.
+- Tên phân vùng
+
+Các cột nguồn, được chọn bằng ID, phải là kiểu dữ liệu nguyên thủy và không được chứa trong một map hoặc list, nhưng có thể được lồng trong một struct. Để biết chi tiết về cách chuyển đổi partition spec thành JSON, xem Appendix C.
+
+Thông số phân vùng ghi lại quá trình chuyển đổi từ dữ liệu bảng sang giá trị phân vùng. Điều này được sử dụng để chuyển đổi các điều kiện lọc thành điều kiện lọc phân vùng, ngoài việc chuyển đổi các giá trị dữ liệu. Việc suy ra các điều kiện lọc phân vùng từ các điều kiện lọc cột trên dữ liệu bảng được sử dụng để tách biệt các truy vấn logic khỏi bộ nhớ vật lý: việc phân vùng có thể thay đổi và các bộ lọc phân vùng chính xác luôn được suy ra từ các điều kiện lọc cột. Điều này giúp đơn giản hóa các truy vấn vì người dùng không cần phải cung cấp cả vị từ logic và vị từ phân vùng. Để biết thêm thông tin, hãy xem phần Lập kế hoạch quét bên dưới.
+
+Các trường phân vùng sử dụng phép biến đổi không xác định có thể được đọc bằng cách bỏ qua trường phân vùng đó nhằm mục đích lọc các tệp dữ liệu trong quá trình lập kế hoạch quét. Trong phiên bản v1 và v2, trình đọc nên bỏ qua các trường có phép biến đổi không xác định trong khi đọc; hành vi này là bắt buộc trong phiên bản v3. Trình ghi không được phép commit dữ liệu bằng cách sử dụng thông số kỹ thuật phân vùng chứa trường có phép biến đổi không xác định.
+
+Hai cấu hình phân vùng được coi là tương đương nếu chúng có cùng số lượng trường và đối với mỗi trường tương ứng, các trường đó có cùng ID cột nguồn, định nghĩa chuyển đổi và tên phân vùng. Người ghi không được tạo cấu hình phân vùng mới nếu đã tồn tại một cấu hình phân vùng tương thích được định nghĩa trong bảng.
+
+ID trường phân vùng phải được sử dụng lại nếu thông số kỹ thuật phân vùng hiện có chứa trường tương đương.
+
+#### Partition Transforms
+
+| Transform name    | Description                                                  | Source types                                                                                                                                | Result type          |
+| ----------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| **`identity`**    | Source value, unmodified                                     | Any except for `geometry`, `geography`, and `variant`                                                                                       | Source type          |
+| **`bucket[N]`**   | Hash of value, mod `N` (see below)                           | `int`, `long`, `decimal`, `date`, `time`, `timestamp`, `timestamptz`, `timestamp_ns`, `timestamptz_ns`, `string`, `uuid`, `fixed`, `binary` | `int`                |
+| **`truncate[W]`** | Value truncated to width `W` (see below)                     | `int`, `long`, `decimal`, `string`, `binary`                                                                                                | Source type          |
+| **`year`**        | Extract a date or timestamp year, as years from 1970         | `date`, `timestamp`, `timestamptz`, `timestamp_ns`, `timestamptz_ns`                                                                        | `int`                |
+| **`month`**       | Extract a date or timestamp month, as months from 1970-01-01 | `date`, `timestamp`, `timestamptz`, `timestamp_ns`, `timestamptz_ns`                                                                        | `int`                |
+| **`day`**         | Extract a date or timestamp day, as days from 1970-01-01     | `date`, `timestamp`, `timestamptz`, `timestamp_ns`, `timestamptz_ns`                                                                        | `int`                |
+| **`hour`**        | Extract a timestamp hour, as hours from 1970-01-01 00:00:00  | `timestamp`, `timestamptz`, `timestamp_ns`, `timestamptz_ns`                                                                                | `int`                |
+| **`void`**        | Always produces `null`                                       | Any                                                                                                                                         | Source type or `int` |
+
+Tất cả các phép biến đổi phải trả về null nếu giá trị đầu vào là null.
+
+Phép biến đổi void có thể được sử dụng để thay thế phép biến đổi trong trường phân vùng hiện có, sao cho trường đó thực chất bị loại bỏ trong các bảng v1. Xem phần tiến hóa phân vùng bên dưới.
+
+#### Bucket Transform Details[🔗](https://iceberg.apache.org/spec/#bucket-transform-details "Permanent link")
+
+#### Truncate Transform Details[🔗](https://iceberg.apache.org/spec/#truncate-transform-details "Permanent link")
+
+#### Partition Evolution[🔗](https://iceberg.apache.org/spec/#partition-evolution "Permanent link")
+
+### Sorting
+
+Người dùng có thể sắp xếp dữ liệu của họ trong các phân vùng theo cột để cải thiện hiệu suất. Thông tin về cách dữ liệu được sắp xếp có thể được khai báo cho từng tệp dữ liệu hoặc tệp xóa, theo thứ tự sắp xếp.
+
+Thứ tự sắp xếp được xác định bởi một ID thứ tự sắp xếp và một danh sách các trường sắp xếp. Thứ tự của các trường sắp xếp trong danh sách xác định thứ tự áp dụng việc sắp xếp cho dữ liệu. Mỗi trường sắp xếp bao gồm:
+
+- ID cột nguồn hoặc danh sách ID cột nguồn từ schema của bảng.
+- Phép biến đổi được sử dụng để tạo ra các giá trị dùng để sắp xếp từ cột nguồn. Đây là phép biến đổi tương tự như được mô tả trong [partition transforms](https://iceberg.apache.org/spec/#partition-transforms).
+- **sort direction** chỉ có thể là tăng dần hoặc giảm dần.
+- Một **null order** mô tả thứ tự của các giá trị null khi được sắp xếp. Chỉ có thể là nulls-first hoặc nulls-last.
+
+Để biết thêm chi tiết về cách chuyển đổi thứ tự sắp xếp thành JSON, vui lòng tham khảo JSON, xem Appendix C.
+
+Sắp xếp id 0 được dành riêng cho row chưa được sắp xếp.
+
+Việc sắp xếp các số thực sẽ tạo ra kết quả như sau: NaN < -Infinity < -value < -0 < 0 < value < Infinity < NaN. Điều này phù hợp với cách triển khai so sánh các kiểu dữ liệu số thực trong Java.
+
+Tệp dữ liệu hoặc tệp xóa được liên kết với một thứ tự sắp xếp bằng ID của thứ tự sắp xếp đó trong [a manifest](https://iceberg.apache.org/spec/#manifests). Do đó, bảng phải khai báo tất cả các thứ tự sắp xếp để tra cứu. Bảng cũng có thể được cấu hình với ID thứ tự sắp xếp mặc định, cho biết dữ liệu mới nên được sắp xếp như thế nào theo mặc định. Người ghi nên sử dụng thứ tự sắp xếp mặc định này để sắp xếp dữ liệu khi ghi, nhưng không bắt buộc nếu việc sử dụng thứ tự mặc định quá tốn kém, như trường hợp ghi dữ liệu theo luồng.
+
+Xem thêm: [[illuminating]]
+
+### Manifests
+
+Manifest là một tệp Avro bất biến liệt kê các tệp dữ liệu hoặc tệp cần xóa, cùng với bộ dữ liệu phân vùng, số liệu và thông tin theo dõi của mỗi tệp. Một hoặc nhiều tệp kê khai được sử dụng để lưu trữ [snapshot](https://iceberg.apache.org/spec/#snapshots), theo dõi tất cả các tệp trong một bảng tại một thời điểm nhất định. Các tệp kê khai được theo dõi bởi một [manifest list](https://iceberg.apache.org/spec/#manifest-lists) cho mỗi ảnh chụp nhanh của bảng.
+
+Nguồn: https://iceberg.apache.org/spec/
