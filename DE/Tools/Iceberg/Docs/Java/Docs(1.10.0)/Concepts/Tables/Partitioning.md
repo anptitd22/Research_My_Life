@@ -1,4 +1,3 @@
-
 - [[#What is partitioning?|What is partitioning?]]
 - [[#What does Iceberg do differently?|What does Iceberg do differently?]]
 - [[#Partitioning in Hive (skip)|Partitioning in Hive (skip)]]

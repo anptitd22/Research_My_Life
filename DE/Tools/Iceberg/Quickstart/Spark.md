@@ -1,4 +1,3 @@
-
 - [[#Docker-Compose|Docker-Compose]]
 - [[#Reading Data from a Table|Reading Data from a Table]]
 - [[#Adding A Catalog|Adding A Catalog]]

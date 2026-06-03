@@ -1,4 +1,3 @@
-
 - [[#Installation|Installation]]
 - [[#Connecting to a catalog|Connecting to a catalog]]
 - [[#Write a PyArrow dataframe|Write a PyArrow dataframe]]

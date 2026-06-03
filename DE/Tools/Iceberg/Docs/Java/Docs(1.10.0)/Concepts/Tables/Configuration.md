@@ -1,4 +1,3 @@
-
 - [[#Table properties|Table properties]]
 - [[#Write properties|Write properties]]
 - [[#Table behavior properties|Table behavior properties]]

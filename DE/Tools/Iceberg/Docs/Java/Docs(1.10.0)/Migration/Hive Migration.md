@@ -1,3 +1,8 @@
+- [[#Enabling Migration from Hive to Iceberg|Enabling Migration from Hive to Iceberg]]
+- [[#Snapshot Hive Table to Iceberg|Snapshot Hive Table to Iceberg]]
+- [[#Migrate Hive Table To Iceberg|Migrate Hive Table To Iceberg]]
+- [[#Add Files From Hive Table to Iceberg|Add Files From Hive Table to Iceberg]]
+
 Apache Hive hỗ trợ các định dạng tệp ORC, Parquet và Avro, có thể được chuyển đổi sang Iceberg. Khi chuyển dữ liệu sang bảng Iceberg, vốn cung cấp tính năng quản lý phiên bản và cập nhật giao dịch, chỉ cần chuyển các tệp dữ liệu mới nhất.
 
 Iceberg hỗ trợ cả ba thao tác di chuyển: Snapshot Table, Migrate Table, and Add Files để di chuyển dữ liệu từ bảng Hive sang bảng Iceberg. Vì bảng Hive không duy trì snapshot, quá trình di chuyển về cơ bản bao gồm việc tạo một bảng Iceberg mới với schema hiện có và cam kết tất cả các tệp dữ liệu trên tất cả các phân vùng vào bảng Iceberg mới. Sau khi di chuyển ban đầu, bất kỳ tệp dữ liệu mới nào sẽ được thêm vào bảng Iceberg mới bằng thao tác Add Files.

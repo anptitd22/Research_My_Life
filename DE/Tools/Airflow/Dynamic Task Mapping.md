@@ -1,4 +1,28 @@
-# Dynamic Task Mapping[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#dynamic-task-mapping "Link to this heading")
+- [[#Simple mapping|Simple mapping]]
+	- [[#Simple mapping#Task-generated Mapping|Task-generated Mapping]]
+	- [[#Simple mapping#Repeated mapping|Repeated mapping]]
+	- [[#Simple mapping#Adding parameters that do not expand|Adding parameters that do not expand]]
+	- [[#Simple mapping#Mapping over multiple parameters|Mapping over multiple parameters]]
+	- [[#Simple mapping#Named mapping|Named mapping]]
+- [[#Mapping with non-TaskFlow operators|Mapping with non-TaskFlow operators]]
+	- [[#Mapping with non-TaskFlow operators#Mapping over result of classic operators|Mapping over result of classic operators]]
+	- [[#Mapping with non-TaskFlow operators#Mixing TaskFlow and classic operators|Mixing TaskFlow and classic operators]]
+- [[#Assigning multiple parameters to a non-TaskFlow operator|Assigning multiple parameters to a non-TaskFlow operator]]
+- [[#Mapping over a task group|Mapping over a task group]]
+	- [[#Mapping over a task group#Value references in a task group function|Value references in a task group function]]
+	- [[#Mapping over a task group#Depth-first execution|Depth-first execution]]
+	- [[#Mapping over a task group#Depending on a mapped task group’s output|Depending on a mapped task group’s output]]
+		- [[#Depending on a mapped task group’s output#Branching on a mapped task group’s output|Branching on a mapped task group’s output]]
+- [[#Filtering items from a mapped task|Filtering items from a mapped task]]
+- [[#Transforming expanding data|Transforming expanding data]]
+- [[#Combining upstream data (aka “zipping”)|Combining upstream data (aka “zipping”)]]
+- [[#Concatenating multiple upstreams|Concatenating multiple upstreams]]
+- [[#What data types can be expanded?|What data types can be expanded?]]
+- [[#How do templated fields and mapped arguments interact?|How do templated fields and mapped arguments interact?]]
+- [[#Placing limits on mapped tasks|Placing limits on mapped tasks]]
+- [[#Automatically skipping zero-length maps|Automatically skipping zero-length maps]]
+
+# Dynamic Task Mapping
 
 ## Simple mapping
 
@@ -272,7 +296,7 @@ with DAG(dag_id="mapped_s3", start_date=datetime(2020, 4, 7)) as dag:
     total(lines=counts)
 ```
 
-## Assigning multiple parameters to a non-TaskFlow operator[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#assigning-multiple-parameters-to-a-non-taskflow-operator "Link to this heading")
+## Assigning multiple parameters to a non-TaskFlow operator
 
 Đôi khi, một tiến trình upstream cần chỉ định nhiều đối số cho một tiến trình downstream. Để làm điều này, bạn có thể sử dụng hàm `expand_kwargs`, hàm này nhận một chuỗi các ánh xạ để ánh xạ tới.
 
@@ -349,7 +373,7 @@ file_transforms.expand(filename=["data1.json", "data2.json"])
 
 Trong ví dụ trên, tác vụ `convert_to_yaml` được mở rộng thành hai thể hiện tác vụ trong quá trình chạy. Thể hiện đầu tiên sẽ nhận "data1.json" làm đầu vào, và thể hiện thứ hai nhận "data2.json".
 
-### Value references in a task group function[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#value-references-in-a-task-group-function "Link to this heading")
+### Value references in a task group function
 
 Một điểm khác biệt quan trọng giữa hàm tác vụ (`@task`) và hàm nhóm tác vụ (`@task_group`) là, vì task group không có người thực hiện liên kết, nên code trong hàm task group không thể giải quyết các đối số được truyền vào; giá trị thực chỉ được giải quyết khi tham chiếu được truyền vào tác vụ.
 
@@ -383,7 +407,7 @@ Do đó, điều quan trọng cần nhớ là, nếu bạn định thực hiện
 >
 >Hiện tại, việc ánh xạ tác vụ lồng ghép bên trong một task group đã được ánh xạ là không được phép. Mặc dù khía cạnh kỹ thuật của tính năng này không quá khó, nhưng chúng tôi đã quyết định cố tình bỏ qua tính năng này vì nó làm tăng đáng kể độ phức tạp của giao diện người dùng và có thể không cần thiết cho các trường hợp sử dụng thông thường. Hạn chế này có thể được xem xét lại trong tương lai tùy thuộc vào phản hồi của người dùng.
 
-### Depth-first execution[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#depth-first-execution "Link to this heading")
+### Depth-first execution
 
 Nếu một task group được ánh xạ chứa nhiều tác vụ, tất cả các tác vụ trong nhóm sẽ được mở rộng “cùng nhau” dựa trên cùng một đầu vào. Ví dụ:
 
@@ -408,7 +432,7 @@ replace_defaults.expand(filename=converted)
 
 Tuy nhiên, điểm khác biệt là một task group cho phép mỗi tác vụ bên trong chỉ phụ thuộc vào “đầu vào liên quan” của nó. Đối với ví dụ trên, tác vụ `replace_defaults` sẽ chỉ phụ thuộc vào `convert_to_yaml` của cùng một nhóm mở rộng, chứ không phải các trường hợp của cùng một tác vụ nhưng thuộc nhóm khác. Chiến lược này, được gọi là thực thi theo chiều sâu (_depth-first execution_) (trái ngược với thực thi theo chiều rộng _breath-first execution_ đơn giản không có nhóm), cho phép phân tách tác vụ hợp lý hơn, các quy tắc phụ thuộc chi tiết hơn và phân bổ tài nguyên chính xác hơn — sử dụng ví dụ trên, tác vụ `replace_defaults` đầu tiên có thể chạy trước khi `convert_to_yaml("data2.json")` hoàn thành và không cần quan tâm đến việc nó có thành công hay không.
 
-### Depending on a mapped task group’s output[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#depending-on-a-mapped-task-group-s-output "Link to this heading")
+### Depending on a mapped task group’s output
 
 Tương tự như task group được ánh xạ, việc dựa vào kết quả đầu ra của task group được ánh xạ cũng sẽ tự động tổng hợp kết quả của nhóm đó:
 
@@ -425,7 +449,7 @@ consumer(results)  # Will receive [4, 6, 8].
 
 Cũng có thể thực hiện bất kỳ thao tác nào như là kết quả từ một tác vụ được ánh xạ thông thường.
 
-#### Branching on a mapped task group’s output[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#branching-on-a-mapped-task-group-s-output "Link to this heading")
+#### Branching on a mapped task group’s output
 
 Mặc dù không thể triển khai logic phân nhánh (ví dụ: sử dụng `@task.branch`) trên kết quả của một tác vụ được ánh xạ, nhưng vẫn có thể phân nhánh dựa trên đầu vào của một task group. Ví dụ sau đây minh họa việc thực thi một trong ba tác vụ dựa trên đầu vào của một task group được ánh xạ.
 
@@ -484,7 +508,7 @@ def create_copy_kwargs(filename):
 
 Điều này khiến `copy_files` chỉ mở rộng đối với các tệp `.json` và `.yml`, trong khi bỏ qua các loại tệp còn lại.
 
-## Transforming expanding data[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#transforming-expanding-data "Link to this heading")
+## Transforming expanding data
 
 Vì việc chuyển đổi định dạng dữ liệu đầu ra cho việc ánh xạ tác vụ là khá phổ biến, đặc biệt là từ một toán tử không phải TaskFlow, nơi định dạng đầu ra đã được xác định trước và không thể dễ dàng chuyển đổi (như `create_copy_kwargs` trong ví dụ trên), nên có thể sử dụng một hàm `map()` đặc biệt để dễ dàng thực hiện loại chuyển đổi này. Do đó, ví dụ trên có thể được sửa đổi như sau:
 
@@ -516,16 +540,18 @@ Có một vài điều cần lưu ý:
 2. Hàm này luôn nhận chính xác một đối số vị trí. Hàm này được gọi cho mỗi mục trong đối tượng có thể lặp được dùng để task-mapping, tương tự như cách hoạt động của hàm `map()` tích hợp sẵn trong Python. 
 3. Vì hàm được thực thi như một phần của tác vụ tiếp theo, bạn có thể sử dụng bất kỳ kỹ thuật hiện có nào để viết hàm tác vụ. Ví dụ, để đánh dấu một thành phần là bị bỏ qua, bạn nên ném ngoại lệ AirflowSkipException. Lưu ý rằng việc trả về `None` không hoạt động ở đây.
 
-## Combining upstream data (aka “zipping”)[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#combining-upstream-data-aka-zipping "Link to this heading")
+## Combining upstream data (aka “zipping”)
 
-## Concatenating multiple upstreams[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#concatenating-multiple-upstreams "Link to this heading")
+## Concatenating multiple upstreams
 
-## What data types can be expanded?[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#what-data-types-can-be-expanded "Link to this heading")
+## What data types can be expanded?
 
-## How do templated fields and mapped arguments interact?[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#how-do-templated-fields-and-mapped-arguments-interact "Link to this heading")
+## How do templated fields and mapped arguments interact?
 
-## Placing limits on mapped tasks[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#placing-limits-on-mapped-tasks "Link to this heading")
+## Placing limits on mapped tasks
 
-## Automatically skipping zero-length maps[](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html#automatically-skipping-zero-length-maps "Link to this heading")
+## Automatically skipping zero-length maps
+
+Nguồn: https://airflow.apache.org/docs/apache-airflow/3.1.8/authoring-and-scheduling/dynamic-task-mapping.html
 
 

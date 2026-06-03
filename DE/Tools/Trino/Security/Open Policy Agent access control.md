@@ -1,3 +1,14 @@
+- [[#Requirements|Requirements]]
+- [[#Trino configuration|Trino configuration]]
+	- [[#Trino configuration#Logging|Logging]]
+	- [[#Trino configuration#Permission management|Permission management]]
+- [[#OPA configuration|OPA configuration]]
+	- [[#OPA configuration#Example requests to OPA|Example requests to OPA]]
+- [[#Row filtering|Row filtering]]
+- [[#Column masking|Column masking]]
+	- [[#Column masking#Batch column masking|Batch column masking]]
+- [[#Batch mode|Batch mode]]
+
 Plugin kiểm soát truy cập Open Policy Agent cho phép sử dụng [Open Policy Agent (OPA)](https://www.openpolicyagent.org/) làm công cụ ủy quyền để kiểm soát truy cập chi tiết vào các catalogs, schemas, tables và nhiều hơn nữa trong Trino. Các chính sách được định nghĩa trong OPA, và Trino kiểm tra các đặc quyền kiểm soát truy cập trong OPA.
 
 ## Requirements

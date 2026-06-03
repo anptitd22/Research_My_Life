@@ -1,4 +1,3 @@
-
 - [[#Create a table|Create a table]]
 - [[#Load a table|Load a table]]
 	- [[#Load a table#Catalog table|Catalog table]]

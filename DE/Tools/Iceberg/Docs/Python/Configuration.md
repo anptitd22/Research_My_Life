@@ -1,4 +1,3 @@
-
 - [[#Setting Configuration Values|Setting Configuration Values]]
 - [[#Tables|Tables]]
 	- [[#Tables#Write options|Write options]]

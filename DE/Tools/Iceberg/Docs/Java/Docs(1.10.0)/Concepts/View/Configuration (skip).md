@@ -1,3 +1,6 @@
+- [[#View properties|View properties]]
+	- [[#View properties#View behavior properties|View behavior properties]]
+
 ## View properties
 
 Iceberg views support properties to configure view behavior. Below is an overview of currently available view properties.

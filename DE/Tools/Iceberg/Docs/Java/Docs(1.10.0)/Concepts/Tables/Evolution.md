@@ -1,4 +1,3 @@
-
 - [[#Schema evolution|Schema evolution]]
 - [[#Correctness|Correctness]]
 - [[#Partition evolution|Partition evolution]]

@@ -1,4 +1,3 @@
-
 - [[#General configuration|General configuration]]
 	- [[#General configuration#Fault-tolerant execution support|Fault-tolerant execution support]]
 - [[#File system access configuration|File system access configuration]]

@@ -1,0 +1,1 @@
+Nguồn: https://hive.apache.org/development/gettingstarted-latest/

@@ -1,8 +1,54 @@
+- [[#Format Versioning|Format Versioning]]
+	- [[#Format Versioning#Version 1: Analytic Data Tables|Version 1: Analytic Data Tables]]
+	- [[#Format Versioning#Version 2: Row-level Deletes|Version 2: Row-level Deletes]]
+	- [[#Format Versioning#Version 3: Extended Types and Capabilities|Version 3: Extended Types and Capabilities]]
+	- [[#Format Versioning#Version 4: Metadata Structure and Representation|Version 4: Metadata Structure and Representation]]
+- [[#Goals|Goals]]
+- [[#Overview|Overview]]
+	- [[#Overview#Optimistic Concurrency|Optimistic Concurrency]]
+	- [[#Overview#Sequence Numbers|Sequence Numbers]]
+	- [[#Overview#Row-level Deletes|Row-level Deletes]]
+	- [[#Overview#File System Operations|File System Operations]]
+	- [[#Overview#File Locations in Metadata|File Locations in Metadata]]
+- [[#Specification|Specification]]
+	- [[#Specification#Terms|Terms]]
+	- [[#Specification#Writer requirements[🔗](https://iceberg.apache.org/spec/#writer-requirements "Permanent link")|Writer requirements[🔗](https://iceberg.apache.org/spec/#writer-requirements "Permanent link")]]
+		- [[#Writer requirements[🔗](https://iceberg.apache.org/spec/#writer-requirements "Permanent link")#Writing data files[🔗](https://iceberg.apache.org/spec/#writing-data-files "Permanent link")|Writing data files[🔗](https://iceberg.apache.org/spec/#writing-data-files "Permanent link")]]
+	- [[#Specification#Paths in Metadata[🔗](https://iceberg.apache.org/spec/#paths-in-metadata "Permanent link")|Paths in Metadata[🔗](https://iceberg.apache.org/spec/#paths-in-metadata "Permanent link")]]
+		- [[#Paths in Metadata[🔗](https://iceberg.apache.org/spec/#paths-in-metadata "Permanent link")#Path Resolution[🔗](https://iceberg.apache.org/spec/#path-resolution "Permanent link")|Path Resolution[🔗](https://iceberg.apache.org/spec/#path-resolution "Permanent link")]]
+		- [[#Paths in Metadata[🔗](https://iceberg.apache.org/spec/#paths-in-metadata "Permanent link")#Path Relativization[🔗](https://iceberg.apache.org/spec/#path-relativization "Permanent link")|Path Relativization[🔗](https://iceberg.apache.org/spec/#path-relativization "Permanent link")]]
+		- [[#Paths in Metadata[🔗](https://iceberg.apache.org/spec/#paths-in-metadata "Permanent link")#Table Location Specification[🔗](https://iceberg.apache.org/spec/#table-location-specification "Permanent link")|Table Location Specification[🔗](https://iceberg.apache.org/spec/#table-location-specification "Permanent link")]]
+	- [[#Specification#Schemas and Data Types|Schemas and Data Types]]
+		- [[#Schemas and Data Types#Nested Types[🔗](https://iceberg.apache.org/spec/#nested-types "Permanent link")|Nested Types[🔗](https://iceberg.apache.org/spec/#nested-types "Permanent link")]]
+		- [[#Schemas and Data Types#Semi-structured Types[🔗](https://iceberg.apache.org/spec/#semi-structured-types "Permanent link")|Semi-structured Types[🔗](https://iceberg.apache.org/spec/#semi-structured-types "Permanent link")]]
+		- [[#Schemas and Data Types#Primitive Types[🔗](https://iceberg.apache.org/spec/#primitive-types "Permanent link")|Primitive Types[🔗](https://iceberg.apache.org/spec/#primitive-types "Permanent link")]]
+		- [[#Schemas and Data Types#Default values[🔗](https://iceberg.apache.org/spec/#default-values "Permanent link")|Default values[🔗](https://iceberg.apache.org/spec/#default-values "Permanent link")]]
+		- [[#Schemas and Data Types#Schema Evolution[🔗](https://iceberg.apache.org/spec/#schema-evolution "Permanent link")|Schema Evolution[🔗](https://iceberg.apache.org/spec/#schema-evolution "Permanent link")]]
+		- [[#Schemas and Data Types#Identifier Field IDs[🔗](https://iceberg.apache.org/spec/#identifier-field-ids "Permanent link")|Identifier Field IDs[🔗](https://iceberg.apache.org/spec/#identifier-field-ids "Permanent link")]]
+		- [[#Schemas and Data Types#Reserved Field IDs[🔗](https://iceberg.apache.org/spec/#reserved-field-ids "Permanent link")|Reserved Field IDs[🔗](https://iceberg.apache.org/spec/#reserved-field-ids "Permanent link")]]
+		- [[#Schemas and Data Types#Row Lineage[🔗](https://iceberg.apache.org/spec/#row-lineage "Permanent link")|Row Lineage[🔗](https://iceberg.apache.org/spec/#row-lineage "Permanent link")]]
+	- [[#Specification#Partitioning|Partitioning]]
+		- [[#Partitioning#Partition Transforms|Partition Transforms]]
+		- [[#Partitioning#Bucket Transform Details[🔗](https://iceberg.apache.org/spec/#bucket-transform-details "Permanent link")|Bucket Transform Details[🔗](https://iceberg.apache.org/spec/#bucket-transform-details "Permanent link")]]
+		- [[#Partitioning#Truncate Transform Details[🔗](https://iceberg.apache.org/spec/#truncate-transform-details "Permanent link")|Truncate Transform Details[🔗](https://iceberg.apache.org/spec/#truncate-transform-details "Permanent link")]]
+		- [[#Partitioning#Partition Evolution[🔗](https://iceberg.apache.org/spec/#partition-evolution "Permanent link")|Partition Evolution[🔗](https://iceberg.apache.org/spec/#partition-evolution "Permanent link")]]
+	- [[#Specification#Sorting|Sorting]]
+	- [[#Specification#Manifests|Manifests]]
+		- [[#Manifests#Manifest Entry Fields|Manifest Entry Fields]]
+	- [[#Specification#Snapshots|Snapshots]]
+	- [[#Specification#Manifest Lists|Manifest Lists]]
+		- [[#Manifest Lists#First Row ID Assignment|First Row ID Assignment]]
+	- [[#Specification#Scan Planning|Scan Planning]]
+
+
 # Iceberg Table Spec
 
 Đây là bản specification (đặc tả) cho định dạng bảng Iceberg, được thiết kế để quản lý một tập hợp lớn các tệp tin thay đổi chậm trong distributed file system hoặc kho lưu trữ key-value dưới dạng bảng.
 
 ## Format Versioning
+
+>[!note]
+>Khác với software version (1.10.0, 1.11.0, ...), đây là version of iceberg spec
 
 Các phiên bản 1, 2 và 3 của Iceberg spec đã hoàn thiện và được cộng đồng chấp nhận.
 
@@ -64,7 +110,7 @@ Trạng thái của bảng được lưu trữ trong các metadata file. Mọi t
 
 Các tập tin dữ liệu trong snapshot được theo dõi bởi một hoặc nhiều tập tin kê khai (manifest files), mỗi tập tin chứa một hàng cho mỗi tập tin dữ liệu trong bảng, dữ liệu phân vùng của tập tin và các chỉ số của nó (metrics). Dữ liệu trong snapshot là sự kết hợp của tất cả các tập tin trong các tập tin kê khai (manifests) của nó. Các tập tin kê khai (Manifest files) được sử dụng lại trên nhiều snapshot để tránh ghi đè metadata ,thứ gây thay đổi chậm. Các tập tin kê khai (manifest files) có thể theo dõi các tập tin dữ liệu với bất kỳ tập hợp con nào của bảng và không được liên kết với các phân vùng.
 
-Các tệp kê khai (manifests) tạo nên snapshot được lưu trữ trong một tệp danh sách tệp kê khai (manifest list file). Mỗi tệp danh sách tệp kê (manifest list) khai lưu trữ metadata về các tệp kê khai (manifests), bao gồm số liệu thống kê phân vùng và số lượng tệp dữ liệu. Các số liệu thống kê này được sử dụng để tránh đọc các tệp kê khai (manifests) không cần thiết cho một thao tác.
+Các tệp kê khai (manifests) tạo nên snapshot được lưu trữ trong một tệp danh sách tệp kê khai (manifest list file). Mỗi tệp danh sách tệp kê khai (manifest list) lưu trữ metadata về các tệp kê khai (manifests), bao gồm số liệu thống kê phân vùng và số lượng tệp dữ liệu. Các số liệu thống kê này được sử dụng để tránh đọc các tệp kê khai (manifests) không cần thiết cho một thao tác.
 
 Xem thêm: [[illuminating]]
 
@@ -263,6 +309,102 @@ Xem thêm: [[illuminating]]
 
 ### Manifests
 
-Manifest là một tệp Avro bất biến liệt kê các tệp dữ liệu hoặc tệp cần xóa, cùng với bộ dữ liệu phân vùng, số liệu và thông tin theo dõi của mỗi tệp. Một hoặc nhiều tệp kê khai được sử dụng để lưu trữ [snapshot](https://iceberg.apache.org/spec/#snapshots), theo dõi tất cả các tệp trong một bảng tại một thời điểm nhất định. Các tệp kê khai được theo dõi bởi một [manifest list](https://iceberg.apache.org/spec/#manifest-lists) cho mỗi ảnh chụp nhanh của bảng.
+Manifest là một tệp Avro bất biến liệt kê các lists data files hoặc delete files, cùng với bộ file’s partition data, metrics và thông tin theo dõi của mỗi tệp. Một hoặc nhiều manifest files được sử dụng để lưu trữ [snapshot](https://iceberg.apache.org/spec/#snapshots), theo dõi tất cả các tệp trong một bảng tại một thời điểm nhất định. Manifests được theo dõi bởi một [manifest list](https://iceberg.apache.org/spec/#manifest-lists) cho mỗi snapshot của bảng.
+
+Manifest là một tệp dữ liệu Iceberg hợp lệ: các tệp phải sử dụng định dạng, schema và column projection hợp lệ của Iceberg.
+
+Một manifest có thể lưu trữ các tệp dữ liệu hoặc các tệp xóa, nhưng không thể cả hai vì manifests chứa tệp xóa sẽ được quét trước trong quá trình lập kế hoạch công việc. Thông tin về việc một manifest là data manifest hay delete manifest được lưu trữ trong manifest metadata.
+
+Manifest lưu trữ các tệp cho một thông số phân vùng duy nhất. Khi thông số phân vùng của bảng thay đổi, các tệp cũ vẫn được giữ lại trong manifest cũ và các tệp mới hơn được ghi vào manifest mới. Điều này là cần thiết vì schema của manifest dựa trên thông số phân vùng của nó (xem bên dưới). Thông số phân vùng của mỗi manifest cũng được sử dụng để chuyển đổi các điều kiện trên các hàng dữ liệu của bảng thành các điều kiện trên các giá trị phân vùng được sử dụng trong quá trình lập kế hoạch công việc để chọn các tệp từ manifest.
+
+Manifest file phải lưu trữ thông số phân vùng và metadata khác dưới dạng thuộc tính trong Avro file's key-value metadata.
+
+| v1         | v2 and v3  | Key                 | Value                                                                                                                                                                       |
+| ---------- | ---------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _required_ | _required_ | `schema`            | JSON representation of the table schema at the time the manifest was written                                                                                                |
+| _optional_ | _required_ | `schema-id`         | ID of the schema used to write the manifest as a string                                                                                                                     |
+| _required_ | _required_ | `partition-spec`    | JSON representation of only the partition fields array of the partition spec used to write the manifest. See [Appendix C](https://iceberg.apache.org/spec/#partition-specs) |
+| _optional_ | _required_ | `partition-spec-id` | ID of the partition spec used to write the manifest as a string                                                                                                             |
+| _optional_ | _required_ | `format-version`    | Table format version number of the manifest as a string                                                                                                                     |
+|            | _required_ | `content`           | Type of content files tracked by the manifest: "data" or "deletes"                                                                                                          |
+
+Cấu trúc của manifest được định nghĩa bởi cấu trúc manifest_entry, được mô tả trong phần tiếp theo.
+
+#### Manifest Entry Fields
+
+...
+
+Xem thêm: [[illuminating]]
+
+### Snapshots
+
+Snapshot bao gồm các trường sau:
+
+|v1|v2|v3|Field|Description|
+|---|---|---|---|---|
+|_required_|_required_|_required_|**`snapshot-id`**|A unique long ID|
+|_optional_|_optional_|_optional_|**`parent-snapshot-id`**|The snapshot ID of the snapshot's parent. Omitted for any snapshot with no parent|
+||_required_|_required_|**`sequence-number`**|A monotonically increasing long that tracks the order of changes to a table|
+|_required_|_required_|_required_|**`timestamp-ms`**|A timestamp when the snapshot was created, used for garbage collection and table inspection|
+|_optional_|_required_|_required_|**`manifest-list`**|The location of a manifest list for this snapshot that tracks manifest files with additional metadata|
+|_optional_|||**`manifests`**|A list of manifest file locations. Must be omitted if `manifest-list` is present|
+|_optional_|_required_|_required_|**`summary`**|A string map that summarizes the snapshot changes, including `operation` as a _required_ field (see below)|
+|_optional_|_optional_|_optional_|**`schema-id`**|ID of the table's current schema when the snapshot was created|
+|||_required_|**`first-row-id`**|The first `_row_id` assigned to the first row in the first data file in the first manifest, see [Row Lineage](https://iceberg.apache.org/spec/#row-lineage)|
+|||_required_|**`added-rows`**|The upper bound of the number of rows with assigned row IDs, see [Row Lineage](https://iceberg.apache.org/spec/#row-lineage)|
+|||_optional_|**`key-id`**|ID of the encryption key that encrypts the manifest list key metadata|
+
+### Manifest Lists
+
+Snapshot được nhúng trong metadata của bảng, nhưng list of manifests cho một snapshot được lưu trữ trong một tệp manifest list riêng biệt.
+
+Một manifest list mới được ghi lại cho mỗi lần cố gắng lưu snapshot vì list of manifest luôn thay đổi để tạo ra snapshot mới. Khi một manifest list được ghi, the (optimistic) sequence number của snapshot sẽ được ghi cho tất cả các tệp manifest mới được theo dõi bởi danh sách đó.
+
+Manifest list bao gồm metadata tóm tắt có thể được sử dụng để tránh quét tất cả các manifest trong snapshot khi lập kế hoạch quét bảng. Điều này bao gồm số lượng tệp được thêm, hiện có và đã xóa, cũng như tóm tắt các giá trị cho từng trường của thông số kỹ thuật phân vùng được sử dụng để ghi manifest.
+
+Manifest list là một tệp dữ liệu Iceberg hợp lệ: các tệp phải sử dụng định dạng, schema và column projection của Iceberg.
+
+Manifest list files lưu trữ `manifest_file`, một cấu trúc với các trường sau:
+
+|v1|v2|v3|Field id, name|Type|Description|
+|---|---|---|---|---|---|
+|_required_|_required_|_required_|**`500 manifest_path`**|`string`|Location of the manifest file|
+|_required_|_required_|_required_|**`501 manifest_length`**|`long`|Length of the manifest file in bytes|
+|_required_|_required_|_required_|**`502 partition_spec_id`**|`int`|ID of a partition spec used to write the manifest; must be listed in table metadata `partition-specs`|
+||_required_|_required_|**`517 content`**|`int` with meaning: `0: data`, `1: deletes`|The type of files tracked by the manifest, either data or delete files; 0 for all v1 manifests|
+||_required_|_required_|**`515 sequence_number`**|`long`|The sequence number when the manifest was added to the table; use 0 when reading v1 manifest lists|
+||_required_|_required_|**`516 min_sequence_number`**|`long`|The minimum data sequence number of all live data or delete files in the manifest; use 0 when reading v1 manifest lists|
+|_required_|_required_|_required_|**`503 added_snapshot_id`**|`long`|ID of the snapshot where the manifest file was added|
+|_optional_|_required_|_required_|**`504 added_files_count`**|`int`|Number of entries in the manifest that have status `ADDED` (1), when `null` this is assumed to be non-zero|
+|_optional_|_required_|_required_|**`505 existing_files_count`**|`int`|Number of entries in the manifest that have status `EXISTING` (0), when `null` this is assumed to be non-zero|
+|_optional_|_required_|_required_|**`506 deleted_files_count`**|`int`|Number of entries in the manifest that have status `DELETED` (2), when `null` this is assumed to be non-zero|
+|_optional_|_required_|_required_|**`512 added_rows_count`**|`long`|Number of rows in all of files in the manifest that have status `ADDED`, when `null` this is assumed to be non-zero|
+|_optional_|_required_|_required_|**`513 existing_rows_count`**|`long`|Number of rows in all of files in the manifest that have status `EXISTING`, when `null` this is assumed to be non-zero|
+|_optional_|_required_|_required_|**`514 deleted_rows_count`**|`long`|Number of rows in all of files in the manifest that have status `DELETED`, when `null` this is assumed to be non-zero|
+|_optional_|_optional_|_optional_|**`507 partitions`**|`list<508: field_summary>` **(see below)**|A list of field summaries for each partition field in the spec. Each field in the list corresponds to a field in the manifest file’s partition spec.|
+|_optional_|_optional_|_optional_|**`519 key_metadata`**|`binary`|Implementation-specific key metadata for encryption|
+|||_optional_|**`520 first_row_id`**|`long`|The starting `_row_id` to assign to rows added by `ADDED` data files [First Row ID Assignment](https://iceberg.apache.org/spec/#first-row-id-assignment)|
+
+`field_summary` là một cấu trúc với các trường sau:
+
+|v1|v2 and v3|Field id, name|Type|Description|
+|---|---|---|---|---|
+|_required_|_required_|**`509 contains_null`**|`boolean`|Whether the manifest contains at least one partition with a null value for the field|
+|_optional_|_optional_|**`518 contains_nan`**|`boolean`|Whether the manifest contains at least one partition with a NaN value for the field|
+|_optional_|_optional_|**`510 lower_bound`**|`bytes` [1]|Lower bound for the non-null, non-NaN values in the partition field, or null if all values are null or NaN [2]|
+|_optional_|_optional_|**`511 upper_bound`**|`bytes` [1]|Upper bound for the non-null, non-NaN values in the partition field, or null if all values are null or NaN [2]|
+
+1. Giới hạn dưới và giới hạn trên được serialized thành byte bằng cách sử dụng phương pháp single-object serialization trong Appendix D. Kiểu dữ liệu được sử dụng để mã hóa giá trị là kiểu dữ liệu của trường phân vùng.
+2. Nếu 0.0 là giá trị của trường phân vùng, thì lower_bound không được lớn hơn +0.0, và nếu +0.0 là giá trị của trường phân vùng, thì upper_bound không được lớn hơn 0.0.
+
+#### First Row ID Assignment
+
+...
+
+Xem thêm: [[illuminating]]
+
+### Scan Planning
+
+Xem thêm: [[illuminating]]
 
 Nguồn: https://iceberg.apache.org/spec/

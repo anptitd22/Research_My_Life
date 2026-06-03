@@ -1,1 +1,1 @@
-[[Trino]]
+[[Iceberg connector]]
