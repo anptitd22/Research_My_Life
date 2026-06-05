@@ -32,33 +32,33 @@ Ví dụ: Một API REST cho ứng dụng di động, trong đó mỗi yêu cầ
 
 Dưới đây là những điểm khác biệt giữa kiến ​​trúc có trạng thái (stateful) và kiến ​​trúc không trạng thái (stateless):
 
-| ***Stateful Architecture***                                          | ***Stateless Architecture***                                            |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Scaling requires synchronization of session data.                    | Horizontal scaling is straightforward.                                  |
-| Failure in one server can affect sessions stored on it.              | Failures are isolated, impacting only individual requests.              |
-| May experience increased latency due to session management.          | Typically faster response times due to lack of session overhead.        |
-| Requires more resources to store and manage session state.           | Uses resources efficiently because no session state is stored.          |
-| Caching can be complex due to session-specific data.                 | Caching is simpler since requests are independent.                      |
-| Deployment can be complex because session data must be synchronized. | Deployment and maintenance are easier due to stateless nature.          |
-| Maintains session context to ensure transaction continuity.          | Transactions are handled independently at the request level.            |
-| Load balancing may require session affinity (sticky sessions).       | Load balancing is simpler since any server can handle any request.      |
-| Developers must manage session handling and related issues.          | Developers can focus mainly on business logic without session concerns. |
+| ***Stateful Architecture***                                                      | ***Stateless Architecture***                                                                                   |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Việc mở rộng quy mô đòi hỏi phải đồng bộ hóa dữ liệu phiên.                      | Mở rộng theo chiều ngang rất đơn giản.                                                                         |
+| Sự cố ở một máy chủ có thể ảnh hưởng đến các phiên được lưu trữ trên máy chủ đó. | Các lỗi này xảy ra riêng lẻ, chỉ ảnh hưởng đến từng yêu cầu riêng biệt.                                        |
+| Có thể gặp phải hiện tượng độ trễ tăng lên do quản lý phiên.                     | Thông thường thời gian phản hồi nhanh hơn do không cần xử lý dữ liệu phiên.                                    |
+| Cần nhiều tài nguyên hơn để lưu trữ và quản lý trạng thái phiên.                 | Sử dụng tài nguyên hiệu quả vì không lưu trữ trạng thái phiên.                                                 |
+| Việc lưu vào bộ nhớ đệm có thể phức tạp do dữ liệu phụ thuộc vào phiên.          | Việc lưu vào bộ nhớ đệm đơn giản hơn vì các yêu cầu độc lập với nhau.                                          |
+| Việc triển khai có thể phức tạp vì dữ liệu phiên phải được đồng bộ hóa.          | Việc triển khai và bảo trì trở nên dễ dàng hơn nhờ bản chất không lưu trạng thái.                              |
+| Duy trì ngữ cảnh phiên để đảm bảo tính liên tục của giao dịch.                   | Các giao dịch được xử lý độc lập ở cấp độ yêu cầu.                                                             |
+| Cân bằng tải có thể yêu cầu tính liên kết phiên (phiên cố định).                 | Cân bằng tải đơn giản hơn vì bất kỳ máy chủ nào cũng có thể xử lý bất kỳ yêu cầu nào.                          |
+| Các nhà phát triển phải quản lý việc xử lý phiên và các vấn đề liên quan.        | Các nhà phát triển có thể tập trung chủ yếu vào logic nghiệp vụ mà không cần lo lắng về vấn đề phiên làm việc. |
 ## Benefits of Stateful Architecture
 
 Kiến trúc trạng thái (stateful architecture) mang lại một số lợi thế khi các ứng dụng cần duy trì phiên người dùng và ngữ cảnh xuyên suốt nhiều yêu cầu.
 
-- ***Session Persistence:*** Maintains user sessions, allowing smooth transitions across steps or devices.
-- ***Efficient Resource Use:*** Stores session data on the server, reducing repeated transfers and processing.
-- ***Personalization:*** Uses past interactions to deliver tailored experiences, like recommendations.
-- ***Enhanced Security:*** Centralized session management supports strong authentication and encryption.
+- ***Session Persistence:*** Duy trì phiên người dùng, cho phép chuyển đổi mượt mà giữa các bước hoặc thiết bị.
+- ***Efficient Resource Use:*** Lưu trữ dữ liệu phiên trên máy chủ, giảm thiểu việc truyền tải và xử lý lặp đi lặp lại.
+- ***Personalization:*** Sử dụng các tương tác trong quá khứ để cung cấp trải nghiệm phù hợp, chẳng hạn như các đề xuất.
+- ***Enhanced Security:*** Quản lý phiên tập trung hỗ trợ xác thực và mã hóa mạnh mẽ.
 
 ## Benefits of Stateless Architecture
 
 Kiến trúc phi trạng thái mang lại lợi thế về khả năng mở rộng và tính đơn giản vì mỗi yêu cầu được xử lý độc lập.
 
-- ***High Scalability:*** Easily handles large numbers of requests without session management.
-- ***Fault Tolerance:*** Each request is independent, so failures in one area don’t affect others.
-- ***Simplified Load Balancing:*** Requests can be evenly distributed without sticky sessions.
-- ***Better Performance:*** No session overhead, resulting in faster responses and lower latency.
+- ***High Scalability:*** Dễ dàng xử lý số lượng lớn yêu cầu mà không cần quản lý phiên.
+- ***Fault Tolerance:*** Mỗi yêu cầu là độc lập, vì vậy lỗi ở một khu vực sẽ không ảnh hưởng đến các khu vực khác.
+- ***Simplified Load Balancing:*** Các yêu cầu có thể được phân bổ đều mà không cần phiên cố định.
+- ***Better Performance:*** Không phát sinh chi phí xử lý phiên, dẫn đến phản hồi nhanh hơn và độ trễ thấp hơn.
 
 Nguồn: [[Clippings/DE/System Design/Stateful Vs Stateless Architecture|Stateful Vs Stateless Architecture]]
