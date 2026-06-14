@@ -13,4 +13,3 @@
 ### Hypervisor
 
 - Có thể được gọi là một VM giám sát (virtual machine monitor - VMN), tạo và điều phối các máy ảo (VM),  là một công nghệ thiết yếu trong cơ sở hạ tầng điện toán hiện đại. Nó giúp cho việc ảo hóa máy tính và máy chủ trở nên khả thi.
-- 
