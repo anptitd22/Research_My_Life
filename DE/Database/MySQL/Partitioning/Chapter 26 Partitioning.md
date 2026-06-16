@@ -1,4 +1,4 @@
-**Table of Contents**
+;**Table of Contents**
 
 [26.1 Overview of Partitioning in MySQL](https://dev.mysql.com/doc/refman/9.7/en/partitioning-overview.html)
 
