@@ -1,6 +1,6 @@
 Iceberg hỗ trợ đọc và ghi các bảng Iceberg thông qua [Hive](https://hive.apache.org/) bằng cách sử dụng [StorageHandler](https://cwiki.apache.org/confluence/display/Hive/StorageHandlers).
 
-Xem thêm: [[Introduction]]
+Xem thêm: [[DE/Tools/Hive/Introduction]]
 
 ## Feature support
 
