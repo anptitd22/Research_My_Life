@@ -1,0 +1,7 @@
+Docker Host là máy vật lý hoặc máy ảo của bạn chạy hệ điều hành Linux (hoặc hệ điều hành khác tương thích với Docker Engine). Nó có thể nằm trên cùng một máy vật lý với máy bạn đang chạy Docker Engine hoặc trên các máy ảo hoặc máy vật lý khác.
+
+Docker Engine là một ứng dụng client-server bao gồm daemon Docker, một API REST quy định các giao diện để tương tác với daemon, và một máy khách giao diện dòng lệnh (CLI) để giao tiếp với daemon. Nó được sử dụng để tạo các Docker Host mới. Mỗi host có khả năng khởi chạy một container từ một image. Chính Docker Engine hoạt động với bất kỳ máy khách nào khác, chẳng hạn như lệnh `docker` hoặc `docker-compose`, và tạo ra các lệnh gọi API đến Docker Host.
+
+Docker Daemon là "_docker server_" được thiết lập trên _Docker host_ và sẽ phản hồi các lệnh gọi API từ Docker Engine. Điều này cho phép giao tiếp từ xa với nhiều máy chủ.
+
+Về cơ bản, Docker Host đang chạy Docker Daemon. Daemon này lắng nghe các yêu cầu API của Docker như “docker run”, “docker builds”, và quản lý các đối tượng Docker như image, container, network, v.v. như một phần công việc của nó. Ngoài ra, để quản lý các dịch vụ Docker, một daemon có thể dễ dàng giao tiếp với các daemon khác.
