@@ -90,16 +90,7 @@ Việc theo dõi xem tin nhắn nào đã được đọc là một bài toán h
 
 Thông thường, ID của các Consumer trong một nhóm được bộ điều phối (group coordinator) cấp phát động, các ID này mang tính tạm thời và sẽ thay đổi mỗi khi Consumer khởi động lại. Điều này dẫn đến hiện tượng hệ thống phải liên tục "rebalance" (phân bổ lại partition) mỗi khi cập nhật cấu hình hoặc triển khai mã nguồn, gây gián đoạn ứng dụng. Để tăng tính khả dụng, Kafka giới thiệu tính năng **Thành viên Tĩnh**. Người dùng có thể cấu hình một ID cố định (thông qua `GROUP_INSTANCE_ID_CONFIG`). Nhờ có ID này, danh tính của Consumer được hệ thống ghi nhớ và sẽ không bị thay đổi khi khởi động lại, từ đó ngăn chặn việc kích hoạt rebalance không cần thiết.
 
-4. Chia sẻ Tiêu thụ (The Share Consumer)
-
-Để đáp ứng một số quy trình xử lý tin nhắn truyền thống không hoàn toàn phù hợp với Consumer Group thông thường (nơi 1 partition chỉ dành cho 1 consumer), Kafka cung cấp mô hình **Share Groups**:
-
-- **Nhiều người cùng đọc một partition:** Các thành viên trong Share Group có thể hợp tác tiêu thụ dữ liệu, trong đó một partition có thể được chia cho nhiều consumer cùng xử lý.
-- **Vượt giới hạn Partition:** Số lượng Share Consumer có thể lớn hơn số lượng partition của topic.
-- **Khóa từng bản ghi (Record Locks):** Khi một Share Consumer kéo dữ liệu, hệ thống sẽ cấp cho nó một khoảng thời gian khóa bản ghi (mặc định 30 giây). Trong lúc bị khóa, các consumer khác trong nhóm sẽ không thể lấy được tin nhắn này.
-- **Xác nhận riêng lẻ:** Từng bản ghi sẽ được Share Consumer xử lý riêng lẻ (tương tự như RabbitMQ). Nếu xử lý thành công, nó gửi Acknowledge; nếu không thể xử lý, nó có thể từ chối (Reject), hoặc giải phóng (Release) khóa để các consumer khác lấy lại tin nhắn đó.
-
-5. Tải dữ liệu ngoại tuyến (Offline Data Load)
+4. Tải dữ liệu ngoại tuyến (Offline Data Load)
 
 Khả năng lưu trữ (persistence) mạnh mẽ của Kafka cho phép các Consumer chạy theo cơ chế "batch" – tức là chỉ thỉnh thoảng hoạt động để nạp dữ liệu hàng loạt vào các hệ thống ngoại tuyến như Hadoop hoặc Data Warehouse. Công việc nạp dữ liệu có thể được chạy song song hoàn toàn dựa trên từng cặp node/topic/partition, và nếu có tác vụ nào gặp sự cố, nó chỉ việc khởi động lại ngay từ vị trí offset ban đầu mà không có rủi ro trùng lặp dữ liệu.
 
@@ -116,18 +107,129 @@ Kafka cung cấp đủ 3 cấu hình ngữ nghĩa giao hàng:
 
 ## The Share Consumer
 
+Để đáp ứng một số quy trình xử lý tin nhắn truyền thống không hoàn toàn phù hợp với Consumer Group thông thường (nơi 1 partition chỉ dành cho 1 consumer), Kafka cung cấp mô hình **Share Groups**:
+
+- **Nhiều người cùng đọc một partition:** Các thành viên trong Share Group có thể hợp tác tiêu thụ dữ liệu, trong đó một partition có thể được chia cho nhiều consumer cùng xử lý.
+- **Vượt giới hạn Partition:** Số lượng Share Consumer có thể lớn hơn số lượng partition của topic.
+- **Khóa từng bản ghi (Record Locks):** Khi một Share Consumer kéo dữ liệu, hệ thống sẽ cấp cho nó một khoảng thời gian khóa bản ghi (mặc định 30 giây). Trong lúc bị khóa, các consumer khác trong nhóm sẽ không thể lấy được tin nhắn này.
+- **Xác nhận riêng lẻ:** Từng bản ghi sẽ được Share Consumer xử lý riêng lẻ (tương tự như RabbitMQ). Nếu xử lý thành công, nó gửi Acknowledge; nếu không thể xử lý, nó có thể từ chối (Reject), hoặc giải phóng (Release) khóa để các consumer khác lấy lại tin nhắn đó.
+
 ## Replication
 
-- **Mô hình Leader - Follower:** Mỗi partition có một Leader và nhiều Followers. Chỉ Leader nhận dữ liệu ghi, các Follower sẽ tự động "pull" dữ liệu từ Leader để đồng bộ.
-- **In-Sync Replicas (ISR):** Thay vì dùng luật đa số (majority vote) như ZooKeeper hay Raft để tiết kiệm tài nguyên và không gian đĩa cứng, Kafka tự động theo dõi danh sách các replica đồng bộ (ISR). Nếu một bản sao dừng hoạt động hoặc quá tụt hậu về offset, nó sẽ bị loại khỏi ISR. Dữ liệu chỉ được đánh dấu "committed" khi đã chép đến toàn bộ các máy trong ISR.
-- **Bầu cử Leader chưa đồng bộ (Unclean Leader Election):** Đây là một tình huống cân não (tradeoff) giữa tính khả dụng (Availability) và tính nhất quán (Consistency). Khi tất cả replica chết, Kafka cho phép bạn chọn: hoặc đợi một node thuộc ISR sống lại (ưu tiên Consistency), hoặc chọn node đầu tiên thức dậy làm Leader dù node này bị thiếu dữ liệu (ưu tiên Availability).
+1. Đơn vị Sao chép và Mô hình Leader - Follower
+
+Trong Kafka, đơn vị sao chép cơ bản là **phân vùng (topic partition)**. Dưới điều kiện hoạt động bình thường, mỗi phân vùng có duy nhất một **Leader** và một số lượng các **Followers**.
+
+- Toàn bộ các thao tác ghi (writes) đều được chuyển thẳng đến Leader. Thao tác đọc có thể được phục vụ bởi Leader hoặc các Follower.
+- Các Follower hoạt động tương tự như một Consumer thông thường: chúng chủ động kéo (pull) các tin nhắn từ Leader để cập nhật vào log của chính mình. Nhờ cơ chế kéo này, các Follower có thể tự động gom nhóm (batch) các mục log lại với nhau để tối ưu hóa hiệu suất áp dụng dữ liệu.
+
+2. Danh sách Bản sao Đồng bộ (In-Sync Replicas - ISR)
+
+Để tự động xử lý lỗi, Kafka cần định nghĩa thế nào là một node "còn sống" (alive). Một node được coi là "đồng bộ" (in-sync) nếu nó thỏa mãn 2 điều kiện:
+
+1. Duy trì một phiên hoạt động tích cực (active session) với máy chủ điều phối (Controller), ví dụ như gửi nhịp tim (heartbeat) định kỳ.
+2. Nếu là Follower, nó phải sao chép dữ liệu từ Leader mà không được phép tụt lại "quá xa".
+
+Tất cả các node thỏa mãn điều kiện này được tập hợp thành một danh sách gọi là **In-Sync Replicas (ISR)**. Nếu một Follower bị chết (mất session) hoặc bị tụt hậu thời gian quá giới hạn quy định, nó sẽ lập tức bị Controller hoặc Leader gỡ bỏ khỏi danh sách ISR.
+
+3. Thiết kế Quorum độc đáo: ISR thay vì Luật Đa số (Majority Vote)
+
+Nhiều hệ thống phân tán (như ZooKeeper hay HDFS Namenode) sử dụng **Luật đa số (Majority Vote)** để bầu Leader và xác nhận dữ liệu. Điểm yếu của luật đa số là nó đòi hỏi rất nhiều bản sao: để chịu đựng được f máy bị lỗi, hệ thống cần duy trì 2f+1 bản sao (ví dụ: cần tới 5 bản sao để chịu được 2 lỗi). Điều này làm tốn gấp 5 lần không gian đĩa cứng và giảm 1/5 thông lượng, không phù hợp cho hệ thống lưu trữ khối lượng dữ liệu khổng lồ như Kafka.
+
+Để giải quyết bài toán này, **Kafka chọn một hướng đi riêng:**
+
+- Hệ thống duy trì động danh sách ISR. Bất kỳ node nào nằm trong ISR đều đủ điều kiện để được bầu làm Leader.
+- Một tin nhắn ghi vào Kafka chỉ được coi là "đã chốt" (committed) khi **tất cả** các bản sao đang nằm trong ISR đều đã nhận được.
+- Bầu Leader mới: Khi Leader sập, chỉ những thành viên nằm trong ISR mới có quyền lên làm Leader mới.
+- Nhờ cơ chế này, Kafka chỉ cần cấu hình f+1 bản sao để chịu được f lỗi mà không làm mất dữ liệu đã chốt. Việc này giúp tiết kiệm đáng kể không gian lưu trữ và cải thiện thông lượng so với hệ thống dựa trên luật đa số.
+
+Ngoài ra, giao thức phục hồi của Kafka không bắt buộc một node bị sập phải giữ nguyên vẹn dữ liệu khi khởi động lại. Trước khi được gia nhập lại ISR, node đó buộc phải đồng bộ hóa lại toàn bộ để đề phòng trường hợp mất dữ liệu khi bị sập nguồn. Thiết kế này giúp Kafka tránh việc phải gọi lệnh `fsync` xuống ổ đĩa cho mỗi lần ghi, giúp giữ được hiệu năng cực kỳ cao.
+
+4. Bầu cử Leader khi tất cả đều chết (Unclean Leader Election)
+
+Điều gì xảy ra nếu toàn bộ các node chứa bản sao của một phân vùng đều sập? Lúc này, tính cam kết dữ liệu không còn được đảm bảo, và hệ thống phải đánh đổi giữa **Tính khả dụng (Availability)** và **Tính nhất quán (Consistency)**:
+
+- **Ưu tiên nhất quán (Mặc định từ bản 0.11.0.0):** Hệ thống sẽ chờ cho đến khi có một node từng thuộc danh sách ISR sống lại và chọn nó làm Leader. Phương pháp này đảm bảo không mất dữ liệu, nhưng hệ thống sẽ bị ngừng hoạt động (unavailable) chừng nào node đó chưa phục hồi.
+- **Ưu tiên khả dụng:** Hệ thống chọn ngay node đầu tiên thức dậy làm Leader, bất kể nó có nằm trong ISR hay không (Unclean Leader Election). Điều này giúp hệ thống hoạt động lại lập tức, nhưng log của node thiếu sót này sẽ trở thành "nguồn chân lý", dẫn đến việc một số dữ liệu đã chốt trước đó có thể bị mất.
+
+5. Đảm bảo Tính khả dụng và Độ bền vững (Guarantees)
+
+Producer có thể điều chỉnh mức độ an toàn mong muốn bằng cấu hình `acks` (đợi 0, 1, hoặc tất cả replicas). Nếu cấu hình `acks=all`, Kafka đảm bảo tin nhắn không bị mất chừng nào còn ít nhất 1 node trong ISR sống sót.
+
+Để ưu tiên tối đa độ bền vững thay vì tính khả dụng, người dùng có thể cấu hình thông số **min.insync.replicas**. Cấu hình này chỉ định kích thước tối thiểu mà danh sách ISR phải có. Nếu số lượng node trong ISR giảm xuống dưới mức này, phân vùng sẽ từ chối các yêu cầu ghi mới (bị mất tính khả dụng) nhằm đảm bảo dữ liệu luôn được ghi đủ số lượng bản sao an toàn.
+
+6. Quản lý hệ thống Bản sao (Replica Management)
+
+Kafka phân bổ đều các phân vùng (round-robin) cũng như vai trò Leadership trên khắp các máy chủ trong cụm để cân bằng tải. Một máy chủ sẽ đóng vai trò đặc biệt gọi là **"Controller"**, có nhiệm vụ quản lý vòng đời của các broker. Khi một broker bị lỗi, thay vì mỗi phân vùng trên broker đó phải tự động mở một cuộc bầu cử riêng lẻ tốn thời gian, Controller sẽ phát hiện và gom nhóm (batch) việc thông báo thay đổi Leadership cho nhiều phân vùng cùng lúc. Cơ chế tập trung này làm cho quá trình khôi phục sau sự cố trở nên nhanh chóng và ít tốn kém tài nguyên hơn rất nhiều.
 
 ## Log Compaction
 
-Với các dòng dữ liệu cập nhật theo khóa, thay vì xóa theo thời gian cũ/mới, tính năng Compaction đảm bảo Kafka giữ lại ít nhất phiên bản (giá trị) mới nhất của mỗi khóa (key).
+Thông thường, Kafka xóa dữ liệu cũ dựa trên hai yếu tố thô sơ: **Thời gian** (hết 7 ngày thì xóa) hoặc **Kích thước** (quá 1GB thì xóa). Cách này rất tốt cho dữ liệu dạng sự kiện (Log, Clickstream) vì mỗi tin nhắn độc lập với nhau.
 
-- Tính năng này đặc biệt mạnh mẽ đối với việc sao lưu trạng thái database, event sourcing hay phục hồi hệ thống khi gặp sự cố, vì Consumer mới tham gia có thể quét lại từ đầu và có ngay phiên bản dữ liệu hoàn chỉnh của mọi record.
-- Việc xóa dữ liệu diễn ra ở nền (background threads) mà không cản trở việc đọc ghi, dữ liệu xóa sẽ nhận marker gọi là "tombstone" (một bản ghi có khóa nhưng thân rỗng).
+Tuy nhiên, với dữ liệu dạng thay đổi trạng thái (ví dụ: cập nhật Email của User), chúng ta chỉ quan tâm đến **trạng thái cuối cùng (mới nhất)** của User đó.
+
+- Nếu xóa theo thời gian, ta có thể vô tình xóa mất Email của một User đã lâu không cập nhật.    
+- Nếu lưu lại tất cả lịch sử thay đổi từ xưa đến nay, ổ đĩa sẽ phình to vô hạn.
+    
+> **Giải pháp là Log Compaction:** Thay vì xóa theo thời gian, Kafka sẽ quét và xóa các bản ghi cũ, **chỉ giữ lại duy nhất bản ghi có giá trị mới nhất cho mỗi Key.**
+
+1. Ứng dụng thực tiễn (Use Cases)
+
+Log Compaction đặc biệt hữu ích cho các luồng dữ liệu theo dõi sự thay đổi của dữ liệu có thể cập nhật (mutable data), điển hình như:
+
+- **Đồng bộ thay đổi cơ sở dữ liệu (Database change subscription):** Khi luồng Kafka chứa các cập nhật từ Database, hệ thống cần duy trì trạng thái dữ liệu hoàn chỉnh để nạp lại vào bộ đệm (cache), máy chủ tìm kiếm hoặc Hadoop khi có sự cố, thay vì chỉ lấy các bản ghi thay đổi theo thời gian thực.
+- **Event Sourcing:** Một mẫu thiết kế ứng dụng dùng chính luồng thay đổi (log) làm kho lưu trữ chính (primary store) cho ứng dụng.
+- **Phục hồi tính sẵn sàng cao (High-Availability Journaling):** Các hệ thống xử lý luồng (như Apache Samza) có thể ghi lại các thay đổi về trạng thái cục bộ của chúng (ví dụ: các phép đếm, gom nhóm) vào Kafka. Nếu máy tính toán bị sập, một quy trình mới có thể đọc lại dữ liệu này để khôi phục toàn bộ trạng thái và tiếp tục chạy.
+
+2. Cơ chế hoạt động (Log Compaction Basics)
+
+![[kafka_introduction2.png]]
+
+Về mặt logic, một log được cấu hình compaction sẽ chia làm 2 phần:
+
+- **Head (Đầu Nhật Ký - Vùng "Bẩn" / Dirty):** Nằm ở phía cuối log, nơi các tin nhắn mới đang liên tục được ghi vào. Vùng này **chưa được nén**, các offset (chỉ số) liên tiếp nhau (36, 37, 38...) và có thể chứa nhiều tin nhắn trùng Key.
+- **Tail (Đuôi Nhật Ký - Vùng "Sạch" / Clean):** Đã trải qua quá trình nén. Tại đây, mỗi Key chỉ có duy nhất một giá trị mới nhất.
+
+### Điểm đặc biệt về Offset:
+
+Khi nén, các bản ghi cũ bị xóa đi khiến các số Offset không còn liên tục nữa (ví dụ từ offset 35 nhảy thẳng lên 38). Tuy nhiên:
+
+- **Offset của tin nhắn không bao giờ thay đổi.** Nó là định danh vĩnh viễn.
+    
+- Nếu Client yêu cầu đọc từ một offset đã bị xóa (ví dụ offset 36), Kafka sẽ tự động trả về tin nhắn ở offset lớn hơn gần nhất (offset 38).
+
+**Đặc điểm của quá trình tinh gọn (nén):**
+
+- **Bảo toàn Offset (Offset Immutability):** Dù tin nhắn bị xóa đi, các tin nhắn còn lại trong phần Tail vẫn giữ nguyên offset gốc được cấp phát lúc mới ghi. Offset không bao giờ thay đổi. Nếu một consumer gọi đọc từ một offset đã bị xóa, hệ thống chỉ đơn giản trả về tin nhắn có offset hợp lệ cao hơn tiếp theo.
+- **Đánh dấu xóa (Tombstones):** Để xóa hoàn toàn một key, Producer gửi một tin nhắn có key đó nhưng phần thân (payload) mang giá trị `null`. Bản ghi này được gọi là "tombstone" (bia mộ). Marker này sẽ dọn sạch mọi tin nhắn cũ của key đó, nhưng chính nó cũng sẽ bị xóa khỏi log sau một khoảng thời gian (cấu hình qua `delete.retention.ms`, mặc định là 24 giờ) để giải phóng không gian,.
+
+![[kafka_introduction3.png]]
+
+3. Tiến trình dọn dẹp ở nền (The Log Cleaner)
+
+Việc tinh gọn được thực hiện bởi "log cleaner" – một nhóm các luồng chạy ngầm (background threads). Quá trình dọn dẹp không hề gây gián đoạn hay chặn (block) các thao tác đọc ghi của client và có thể được giới hạn băng thông I/O để không ảnh hưởng đến hiệu suất hệ thống.
+
+Cụ thể, một luồng compactor hoạt động theo các bước:
+
+1. Chọn tệp log đang có tỷ lệ giữa phần Head và phần Tail cao nhất để tối ưu dung lượng dọn dẹp.
+2. Quét phần Head và tạo một bảng băm (hash table) rất nhỏ gọn trong bộ nhớ để lưu lại offset mới nhất của từng key. Bảng này chỉ tốn chính xác 24 bytes cho mỗi mục.
+3. Quét lại log từ đầu đến cuối, sao chép dữ liệu sang các phân đoạn (segments) mới, đồng thời loại bỏ những tin nhắn có key đã xuất hiện với offset lớn hơn trong bảng băm.
+4. Hoán đổi trực tiếp các tệp log cũ bằng tệp log mới và sạch.
+
+5. Những đảm bảo từ Kafka (Guarantees)
+
+Khi sử dụng Log Compaction, Kafka cam kết các điều sau:
+
+- **Giữ nguyên thứ tự:** Compaction chỉ gỡ bỏ tin nhắn chứ không bao giờ đảo lộn thứ tự của chúng.
+- **Đọc không bỏ sót đối với người dùng theo kịp:** Bất kỳ Consumer nào theo kịp phần Head của log đều sẽ đọc được toàn bộ các tin nhắn gốc tuần tự.
+- **Trạng thái cuối hoàn hảo cho người dùng đọc từ đầu:** Một Consumer mới bắt đầu đọc từ đầu log (offset 0) sẽ luôn thấy được trạng thái cuối cùng của mọi bản ghi theo đúng thứ tự chúng được ghi vào. Nó cũng sẽ nhận được các thông báo xóa (tombstones) miễn là nó bắt kịp đến phần Head của log trong khoảng thời gian trước khi tombstone bị hết hạn.
+
+5. Cấu hình kiểm soát độ trễ Compaction (Configuration)
+
+Người dùng có thể tinh chỉnh hành vi của compactor thông qua các thông số:
+
+- **min.compaction.lag.ms**: Cấu hình thời gian tối thiểu một tin nhắn phải nằm trong phần Head (không bị tinh gọn). Điều này đảm bảo ứng dụng có đủ độ trễ để kịp đọc mọi sự kiện cập nhật trước khi chúng bị nén lại.
+- **max.compaction.lag.ms**: Cấu hình khoảng thời gian trễ tối đa để đảm bảo một tin nhắn (ngay cả trên log có tốc độ ghi thấp) không bị tồn đọng vô thời hạn mà chắc chắn sẽ đủ điều kiện để được đưa vào diện xem xét tinh gọn,.
 
 ## Quotas
 
