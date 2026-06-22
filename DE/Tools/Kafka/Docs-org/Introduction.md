@@ -1,3 +1,11 @@
+- [[#What is event streaming?|What is event streaming?]]
+- [[#What can I use event streaming for?|What can I use event streaming for?]]
+- [[#Apache Kafka® is an event streaming platform. What does that mean?|Apache Kafka® is an event streaming platform. What does that mean?]]
+- [[#How does Kafka work in a nutshell?|How does Kafka work in a nutshell?]]
+- [[#Main Concepts and Terminology|Main Concepts and Terminology]]
+- [[#Kafka APIs|Kafka APIs]]
+- [[#Where to go from here|Where to go from here]]
+
 ## What is event streaming?
 
 Event streaming is the digital equivalent of the human body’s central nervous system. It is the technological foundation for the ‘always-on’ world where businesses are increasingly software-defined and automated, and where the user of software is more software.
