@@ -98,12 +98,77 @@ Khả năng lưu trữ (persistence) mạnh mẽ của Kafka cho phép các Cons
 
 Kafka cung cấp đủ 3 cấu hình ngữ nghĩa giao hàng:
 
-- **At-most-once:** Tin nhắn có thể mất nhưng không gửi lặp lại.
-- **At-least-once:** Mặc định của Kafka. Tin nhắn có thể được nhận nhiều lần nếu xảy ra lỗi mạng làm Producer gửi lại.
+- **At most once (Tối đa một lần):** Message có thể bị mất nhưng tuyệt đối không bao giờ được gửi lại hoặc xử lý lặp lại.
+- **At least once (Ít nhất một lần):** Message sẽ không bao giờ bị mất, nhưng trong một số trường hợp có thể bị gửi hoặc xử lý nhiều lần (trùng lặp).
+- **Exactly once (Chính xác một lần):** Đây là mức độ lý tưởng nhất, mỗi message được xử lý một lần và chỉ một lần duy nhất.
+
+Bài toán này được chia làm hai phần riêng biệt: sự đảm bảo khi Producer xuất bản tin nhắn và sự đảm bảo khi Consumer đọc tin nhắn.
+
+1. Từ góc nhìn của Producer (Đảm bảo xuất bản tin nhắn)
+
+Trong Kafka, một tin nhắn được coi là "đã cam kết" (committed) chỉ khi toàn bộ các máy chủ bản sao đồng bộ (ISR - In-Sync Replicas) của phân vùng đó đã ghi nó vào log của mình. Một khi đã cam kết, tin nhắn sẽ không bị mất miễn là còn ít nhất một máy chủ sống sót.
+
+Tuy nhiên, rủi ro xảy ra khi mạng bị lỗi:
+
+- **Vấn đề trùng lặp (At-least-once):** Nếu Producer gửi tin đi nhưng gặp lỗi mạng và không nhận được phản hồi, nó sẽ không biết tin nhắn đã được cam kết hay chưa. Trước phiên bản Kafka 0.11.0.0, Producer buộc phải gửi lại tin nhắn, dẫn đến nguy cơ tin nhắn bị ghi đúp vào hệ thống, tạo ra ngữ nghĩa **At-least-once**.
+- **Gửi lũy đẳng (Idempotent Delivery):** Từ phiên bản 0.11.0.0, Kafka giải quyết triệt để vấn đề trên bằng tùy chọn gửi lũy đẳng. Hệ thống gán cho mỗi Producer một ID duy nhất và mỗi tin nhắn một số thứ tự (sequence number). Dựa vào thông tin này, Broker có thể tự động nhận diện và loại bỏ các tin nhắn bị Producer gửi lại do lỗi mạng, đảm bảo không có bản ghi trùng lặp nào được ghi vào log.
+- **Gửi theo Giao dịch (Transactional Delivery):** Cũng từ bản 0.11.0.0, Producer hỗ trợ ghi tin nhắn trên nhiều topic/partition dưới dạng nguyên tử (atomic) thông qua các giao dịch (transactions), đảm bảo rằng tất cả tin nhắn cùng thành công hoặc cùng thất bại.
+
+Tùy vào nhu cầu thực tế về độ trễ, Producer hoàn toàn có thể tự cấu hình mức độ đảm bảo này (ví dụ: gửi bất đồng bộ hoàn toàn để tối ưu độ trễ, hoặc chờ cho đến khi tin nhắn được cam kết hoàn toàn trên các ISR).
+
+2. Từ góc nhìn của Consumer (Đảm bảo tiêu thụ tin nhắn)
+
+Mọi bản sao trong Kafka đều có chung một bản log và các offset (vị trí tin nhắn) giống hệt nhau, và Consumer tự kiểm soát vị trí đọc của mình trong log đó. Việc đạt được ngữ nghĩa nào phụ thuộc hoàn toàn vào **thứ tự Consumer lưu lại vị trí offset và thời điểm xử lý dữ liệu**:
+
+- **At-most-once:** Consumer đọc tin nhắn -> **Lưu vị trí (offset)** -> Xử lý tin nhắn. Nếu ứng dụng sập ngay sau khi lưu vị trí nhưng chưa kịp xử lý xong, khi khởi động lại, nó sẽ tiếp tục đọc từ vị trí mới và bỏ qua các tin nhắn cũ chưa được xử lý thành công. Kafka cho phép triển khai chế độ này bằng cách vô hiệu hóa tính năng tự động thử lại (retries) và chủ động chốt offset trước khi xử lý.
+- **At-least-once (Mặc định):** Consumer đọc tin nhắn -> Xử lý tin nhắn -> **Lưu vị trí (offset)**. Nếu ứng dụng sập sau khi xử lý xong nhưng chưa kịp lưu vị trí, ứng dụng mới khởi động lên sẽ đọc lại từ vị trí cũ và xử lý lại các tin nhắn đó, tạo ra hiện tượng trùng lặp.
+
+3. Đạt được ngữ nghĩa Exactly-once (Chính xác một lần)
+
+Việc đạt được **Exactly-once** khi luân chuyển dữ liệu từ một topic Kafka sang một topic Kafka khác (như trong ứng dụng Kafka Streams) được kết hợp nhờ sức mạnh của **Giao dịch (Transactions)**:
+
+- Vị trí (offset) của Consumer trên thực tế được Kafka lưu trữ như một tin nhắn bên trong một topic nội bộ.
+- Quá trình Consumer lưu cập nhật offset và quá trình xuất dữ liệu ra topic mới được thực hiện trong **cùng một giao dịch (transaction)**.
+- Nếu giao dịch bị hủy bỏ (aborted), offset sẽ tự động hoàn tác về vị trí cũ. Các Consumer ở đầu ra (output) khi được cấu hình mức độ cách ly `read_committed` sẽ chỉ nhìn thấy các tin nhắn thuộc về giao dịch đã cam kết thành công, do đó không bao giờ đọc phải dữ liệu bị lỗi hoặc trùng lặp.
+
+**Khi ghi dữ liệu ra hệ thống bên ngoài Kafka:** Để đạt Exactly-once khi kết nối hệ thống ngoài, cách tốt nhất là **lưu trữ offset của Consumer vào cùng một nơi với dữ liệu đầu ra** thay vì sử dụng cơ chế commit hai pha (two-phase commit) phức tạp. Ví dụ: hệ thống Kafka Connect có thể lưu dữ liệu và offset vào HDFS cùng nhau, đảm bảo dữ liệu luôn được cập nhật chính xác một lần mà không sợ rủi ro lệch pha.
 
 ## Using Transactions
 
-- **Exactly-once & Transactions:** Từ phiên bản 0.11.0.0, Producer có tính năng lũy đẳng (idempotent), gán mỗi tin nhắn một mã sequence number để Broker loại trừ tin trùng lặp. Tính năng Transaction cho phép Producer ghi nhiều gói tin nhắn và cập nhật cả vị trí Offset một cách nguyên tử (atomic). Một khi transaction bị hủy (aborted), Consumer với chế độ cách ly `read_committed` sẽ không nhìn thấy những dữ liệu chưa được chốt.
+1. Bản chất của transaction trong Kafka
+
+Transaction trong Kafka có một điểm khác biệt lớn so với các hệ thống message khác: Consumer và Producer hoạt động hoàn toàn tách biệt, và **chỉ có Producer mới có tính chất giao dịch (transactional)**.
+
+Bí quyết để đạt được Exactly-once nằm ở chỗ Producer có khả năng **cập nhật vị trí của Consumer** (được gọi là "committed offset") thông qua một bản ghi transaction. Việc ghi dữ liệu mới và cập nhật offset được thực hiện một cách nguyên tử (atomic), đảm bảo rằng cả hai hành động này cùng thành công hoặc cùng thất bại.
+
+2. Ba yếu tố cốt lõi để xử lý Exactly-once
+
+Để triển khai giao dịch chính xác bằng Producer và Consumer, bạn cần tuân thủ 3 nguyên tắc sau:
+
+- **Phân bổ độc quyền:** Consumer phải sử dụng cơ chế gán phân vùng (partition assignment) để đảm bảo nó là consumer duy nhất trong nhóm (consumer group) đang xử lý phân vùng đó tại một thời điểm.
+- **Cập nhật nguyên tử:** Producer phải sử dụng transaction để đảm bảo mọi bản ghi nó sinh ra và mọi offset nó cập nhật thay cho Consumer đều được thực hiện trọn vẹn trong một transaction.
+- **Mô hình 1-1:** Để xử lý trơn tru các transaction khi hệ thống xảy ra quá trình phân bổ lại (rebalancing), người ta khuyến nghị sử dụng **một phiên bản Producer cho mỗi phiên bản Consumer**. Các sơ đồ phức tạp hơn vẫn có thể thực hiện nhưng sẽ đi kèm với sự phức tạp rất lớn.
+
+3. Cấu hình thiết yếu
+
+Để cơ chế giao dịch hoạt động đúng, cả Producer và Consumer cần được cấu hình chặt chẽ:
+
+- **Với Consumer:** Bắt buộc cấu hình `isolation.level=read_committed` (để hệ thống không đọc phải các bản ghi thuộc về transaction bị hủy hoặc chưa hoàn tất) và `enable.auto.commit=false` (để ứng dụng tự kiểm soát việc lưu offset thông qua Producer).
+- **Với Producer:** Bắt buộc cấu hình `transactional.id` bằng một chuỗi định danh. Việc này không chỉ biến Producer thành dạng transaction mà còn giúp Kafka nhận diện nếu ứng dụng bị khởi động lại, từ đó tự động hủy (abort) các transaction đang treo từ phiên làm việc trước đó.
+
+4. Quản lý lỗi và Hủy giao dịch (Aborted Transactions)
+
+Khi một transaction hoàn tất (commit) hoặc bị hủy (abort), Kafka sẽ ghi các "bản ghi đánh dấu" (transaction marker records) vào hệ thống để biểu thị kết quả của giao dịch đó. Nhờ các marker này, một Consumer được cấu hình `read_committed` có thể nhận biết và tự động bỏ qua các bản ghi của giao dịch bị hủy.
+
+Việc xử lý lỗi đối với Producer giao dịch đã được chuẩn hóa với các nhóm ngoại lệ (exceptions) rõ ràng:
+
+- **Lỗi tự phục hồi:** `RetriableException` và `RefreshRetriableException` là các lỗi tạm thời, client sẽ tự động thử lại ngầm mà không làm phiền đến ứng dụng.
+- **Lỗi cần hủy giao dịch (AbortableException):** Lỗi này sẽ được đẩy lên ứng dụng. Ứng dụng bắt buộc phải chủ động hủy transaction hiện tại, đồng thời phải khởi tạo (reset) lại vị trí của Consumer để xử lý lại các bản ghi của transaction vừa hỏng.
+- **Lỗi nghiêm trọng cấp ứng dụng:** Bao gồm `ApplicationRecoverableException`, `InvalidConfigurationException`, và `KafkaException`. Với các lỗi này, ứng dụng phải tự có chiến lược phục hồi riêng, thường bao gồm cả việc khởi động lại Producer.
+
+Ví dụ mã mẫu để xử lý các ngoại lệ transaction: [Transaction Client Demo](https://github.com/apache/kafka/blob/trunk/examples/src/main/java/kafka/examples/TransactionalClientDemo.java)
+
+**Chiến lược phục hồi đơn giản nhất:** Khi gặp ngoại lệ không thể tự phục hồi hoặc transaction bị hủy, một chính sách đơn giản và hiệu quả là **hủy bỏ và tạo lại hoàn toàn** các đối tượng Kafka Producer và Kafka Consumer từ đầu. Khi Consumer mới được tạo lại, nó sẽ kích hoạt quá trình rebalance của nhóm, tự động kéo về offset đã commit cuối cùng, qua đó "tua lại" chính xác trạng thái trước khi transaction bị lỗi. Đối với các ứng dụng phức tạp hơn, có thể giữ nguyên đối tượng Consumer và sử dụng hàm `KafkaConsumer.seek` để chủ động tua lại vị trí mong muốn.
 
 ## The Share Consumer
 
