@@ -1,0 +1,2 @@
+- Tại sao lại làm thế này
+- Có bao nhiêu cách làm
