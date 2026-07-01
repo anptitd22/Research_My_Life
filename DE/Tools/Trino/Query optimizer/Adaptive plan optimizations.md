@@ -1,0 +1,1 @@
+Nguồn: https://trino.io/docs/current/optimizer/adaptive-plan-optimizations.html
